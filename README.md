@@ -24,7 +24,7 @@ reportes administrativos y estadísticas de uso, con el fin de optimizar la orga
 reducir los procesos manuales y mejorar la experiencia de los usuarios y la
 administración del lugar.
 
-## problema a solucionar
+## Problema a solucionar
 
 -Se propone el desarrollo de un software de reservas para la cancha sintética, con el objetivo de
 centralizar y optimizar los procesos que actualmente se realizan de forma manual y generan desorden.
@@ -69,7 +69,7 @@ sistemas, no forman parte de los objetivos de este proyecto, ya que se busca cen
 solución en la organización de reservas, pagos, comunicación y administración de la cancha
 sintética.
 
-## conclusiones
+## Conclusiones
 -La implementación del sistema de reservas digitales para la cancha sintética
 representa una solución efectiva a los problemas actuales de desorden, pérdida de
 información y baja difusión de eventos, ya que centraliza todos los procesos en una
