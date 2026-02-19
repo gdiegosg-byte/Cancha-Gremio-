@@ -3,10 +3,13 @@
 
 Integrantes:
 
--Valentina Medina
--Diego Palencia
--Julian Avilez
--Erik Crespo
+*Valentina Medina
+
+*Diego Palencia
+
+*Julian Avilez
+
+*Erik Crespo
 
 ## Introducción
 
@@ -21,8 +24,7 @@ reportes administrativos y estadísticas de uso, con el fin de optimizar la orga
 reducir los procesos manuales y mejorar la experiencia de los usuarios y la
 administración del lugar.
 
-
-##Problema a solucionar 
+## problema a solucionar
 
 -Se propone el desarrollo de un software de reservas para la cancha sintética, con el objetivo de
 centralizar y optimizar los procesos que actualmente se realizan de forma manual y generan desorden.
@@ -40,7 +42,7 @@ transacciones digitales seguras, eliminando papeleo físico y reduciendo tiempos
 Centralizar datos administrativos y de usuarios: garantizando un acceso rápido y confiable a la
 información necesaria para la operación de la cancha.
 
-##Justificacion
+## Justificacion
 
 -La implementación de un sistema digital es necesaria porque actualmente los procesos
 manuales generan muchos problemas: desorden en las reservas, pérdida de información,
@@ -51,11 +53,7 @@ administración, mejorar la comunicación con los usuarios y garantizar una expe
 más ordenada, rápida y confiable para todos.
 
 
-erik crespo duarte
-8:15 p.m. (hace 3 minutos)
-para mí
-
-##Alcance
+## Alcance
 
 -El sistema de reservas permitirá registrar clientes, crear, confirmar y cancelar reservas con un
 calendario en línea, procesar pagos digitales y generar comprobantes. También facilitará la
@@ -71,7 +69,7 @@ sistemas, no forman parte de los objetivos de este proyecto, ya que se busca cen
 solución en la organización de reservas, pagos, comunicación y administración de la cancha
 sintética.
 
-##Conclusiones
+## conclusiones
 -La implementación del sistema de reservas digitales para la cancha sintética
 representa una solución efectiva a los problemas actuales de desorden, pérdida de
 información y baja difusión de eventos, ya que centraliza todos los procesos en una
