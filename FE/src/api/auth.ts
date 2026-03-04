@@ -1,39 +1,63 @@
 import api from './client';
-import { User, PaginatedResponse } from '@/types';
+import { User } from '@/types';
 
 // =============================================
-// Auth & Users API
+// Auth API — campos adaptados al BE
+// BE usa: correo, contraseña, nombre_rol, id_rol
 // =============================================
 
 export const authApi = {
+
+  // POST /api/auth/login
   login: (email: string, password: string) =>
-    api.post<{ user: User; token: string }>('/auth/login', { email, password }),
+    api.post<{ token: string; usuario: { id_usuario: number; nombre: string; correo: string; id_rol: number; nombre_rol: string } }>(
+      '/api/auth/login',
+      { correo: email, contraseña: password }   // BE espera correo/contraseña
+    ),
 
+  // POST /api/auth/registro  ← BE usa /registro no /register
   register: (data: {
-    nombre: string; apellido: string; email: string;
-    password: string; telefono: string;
-  }) => api.post<{ user: User; token: string }>('/auth/register', data),
+    nombre: string;
+    correo: string;
+    contraseña: string;
+    telefono?: string;
+    direccion?: string;
+    fecha_nacimiento?: string;
+    id_tipo_documento?: number;
+  }) => api.post<{ token: string; usuario: { id_usuario: number; nombre: string; correo: string; id_rol: number } }>(
+    '/api/auth/registro',
+    data
+  ),
 
-  logout: () =>
-    api.post('/auth/logout'),
-
+  // GET /api/auth/perfil  ← BE usa /perfil no /me
   me: () =>
-    api.get<User>('/auth/me'),
+    api.get<{
+      id_usuario: number; nombre: string; correo: string;
+      telefono: string; direccion: string; nombre_rol: string;
+    }>('/api/auth/perfil'),
 
-  refreshToken: () =>
-    api.post<{ token: string }>('/auth/refresh'),
+  // PUT /api/auth/perfil
+  updatePerfil: (data: {
+    nombre?: string; telefono?: string; direccion?: string;
+    fecha_nacimiento?: string; id_tipo_documento?: number;
+  }) => api.put('/api/auth/perfil', data),
 };
 
+// =============================================
+// Users/Clientes API — usa /api/admin/clientes
+// =============================================
+
 export const usersApi = {
-  getAll: (params?: { page?: number; limit?: number; search?: string }) =>
-    api.get<PaginatedResponse<User>>('/users', { params }),
 
-  getById: (id: string) =>
-    api.get<User>(`/users/${id}`),
+  // GET /api/admin/clientes  ← solo admin
+  getAll: () =>
+    api.get<{
+      id_usuario: number; nombre: string; correo: string;
+      telefono: string; estado: string; fecha_registro: string;
+      total_reservas: number;
+    }[]>('/api/admin/clientes'),
 
-  update: (id: string, data: Partial<User>) =>
-    api.put<User>(`/users/${id}`, data),
-
-  delete: (id: string) =>
-    api.delete(`/users/${id}`),
+  // PUT /api/admin/clientes/:id/estado
+  toggleEstado: (id: number, estado: 'activo' | 'inactivo') =>
+    api.put(`/api/admin/clientes/${id}/estado`, { estado }),
 };

@@ -2,7 +2,7 @@ import { createContext, useContext, useReducer, useEffect, ReactNode } from 'rea
 import { AuthState, User } from '@/types';
 
 // =============================================
-// Auth Context
+// Auth Context — conectado a BE real
 // =============================================
 
 interface AuthContextType extends AuthState {
@@ -47,12 +47,15 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// URL del backend — definida en FE/.env como VITE_API_URL=http://localhost:3001
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for persisted session on mount
+  // Rehydrate sesion al cargar la app
   useEffect(() => {
-    const token = localStorage.getItem('cg_token');
+    const token   = localStorage.getItem('cg_token');
     const userStr = localStorage.getItem('cg_user');
     if (token && userStr) {
       try {
@@ -66,26 +69,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  async function login(email: string, _password: string) {
+  // ── LOGIN → llama POST /api/auth/login ──────────────────────
+  async function login(email: string, password: string) {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // TODO: Replace with real API call
-      // const response = await api.post('/auth/login', { email, password });
-      // Mocked for skeleton:
-      await new Promise(r => setTimeout(r, 800));
-      const mockUser: User = {
-        id: '1',
-        nombre: 'Admin',
-        apellido: 'CanchaGremio',
-        email,
-        telefono: '3001234567',
-        rol: email.includes('admin') ? 'admin' : 'cliente',
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ correo: email, contraseña: password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.mensaje || 'Error al iniciar sesión');
+      }
+
+      // data = { token, usuario: { id_usuario, nombre, correo, id_rol, nombre_rol } }
+      const user: User = {
+        id:        String(data.usuario.id_usuario),
+        nombre:    data.usuario.nombre,
+        apellido:  '',
+        email:     data.usuario.correo,
+        telefono:  data.usuario.telefono || '',
+        rol:       data.usuario.id_rol === 1 ? 'admin' : 'cliente',
         createdAt: new Date().toISOString(),
       };
-      const mockToken = 'mock-jwt-token';
-      localStorage.setItem('cg_token', mockToken);
-      localStorage.setItem('cg_user', JSON.stringify(mockUser));
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { user: mockUser, token: mockToken } });
+
+      localStorage.setItem('cg_token', data.token);
+      localStorage.setItem('cg_user',  JSON.stringify(user));
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: data.token } });
     } catch (err) {
       dispatch({ type: 'SET_LOADING', payload: false });
       throw err;
