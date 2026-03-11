@@ -1,3 +1,6 @@
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -26,6 +29,8 @@ export default function App() {
             {/* Public */}
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password"  element={<ResetPassword />} /> 
 
             {/* Protected - All authenticated users */}
             <Route path="/reservas" element={

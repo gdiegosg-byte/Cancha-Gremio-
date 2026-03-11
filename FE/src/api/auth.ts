@@ -41,6 +41,13 @@ export const authApi = {
     nombre?: string; telefono?: string; direccion?: string;
     fecha_nacimiento?: string; id_tipo_documento?: number;
   }) => api.put('/api/auth/perfil', data),
+  // POST /api/auth/forgot-password
+  forgotPassword: (correo: string) =>
+    api.post('/api/auth/forgot-password', { correo }),
+
+  // POST /api/auth/reset-password/:token
+  resetPassword: (token: string, contraseña: string) =>
+    api.post(`/api/auth/reset-password/${token}`, { contraseña }),
 };
 
 // =============================================

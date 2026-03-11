@@ -1,5 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const { pool } = require('../config/database');
 
 // ── POST /api/auth/registro ──────────────────────────
@@ -119,4 +121,80 @@ const actualizarPerfil = async (req, res) => {
   }
 };
 
-module.exports = { registro, login, perfil, actualizarPerfil };
+// ── POST /api/auth/forgot-password ───────────────────
+const forgotPassword = async (req, res) => {
+  try {
+    const { correo } = req.body;
+
+    const [rows] = await pool.query(
+      'SELECT id_usuario FROM Usuarios WHERE correo = $1', [correo]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ mensaje: 'Correo no encontrado.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expira = new Date(Date.now() + 3600000);
+
+    await pool.query(
+      'UPDATE Usuarios SET reset_token = $1, reset_token_expira = $2 WHERE correo = $3',
+      [token, expira, correo]
+    );
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT),
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: correo,
+      subject: 'Recuperar contraseña - Cancha Gremio',
+      html: `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
+             <a href="${resetUrl}">${resetUrl}</a>
+             <p>Este enlace expira en 1 hora.</p>`,
+    });
+
+    res.json({ mensaje: 'Correo de recuperación enviado.' });
+  } catch (error) {
+    console.error('Error en forgotPassword:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+};
+
+// ── POST /api/auth/reset-password/:token ─────────────
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { contraseña } = req.body;
+
+    const [rows] = await pool.query(
+      'SELECT id_usuario FROM Usuarios WHERE reset_token = $1 AND reset_token_expira > NOW()',
+      [token]
+    );
+    if (rows.length === 0) {
+      return res.status(400).json({ mensaje: 'Token inválido o expirado.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(contraseña, salt);
+
+    await pool.query(
+      'UPDATE Usuarios SET contraseña = $1, reset_token = NULL, reset_token_expira = NULL WHERE reset_token = $2',
+      [hash, token]
+    );
+
+    res.json({ mensaje: 'Contraseña restablecida correctamente.' });
+  } catch (error) {
+    console.error('Error en resetPassword:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+};
+
+module.exports = { registro, login, perfil, actualizarPerfil, forgotPassword, resetPassword };
