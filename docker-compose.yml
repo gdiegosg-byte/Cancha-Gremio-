@@ -1,0 +1,24 @@
+# ¿Qué? Configura PostgreSQL 17 como contenedor Docker
+# ¿Para qué? Provee la base de datos sin instalar PostgreSQL en el sistema
+# ¿Impacto? Sin esto el backend no puede conectarse a la base de datos
+
+services:
+  db:
+    image: postgres:17
+    container_name: cancha_gremio_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cancha_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cancha_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-cancha_gremio}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cancha_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
