@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
+import { authApi } from '@/api/auth';
 import { Loader2 } from 'lucide-react';
 
 // =============================================
@@ -28,11 +29,16 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      // TODO: authApi.register(form)
-      await new Promise(r => setTimeout(r, 1000));
+      await authApi.register({
+        nombre: form.nombre,
+        apellido: form.apellido,
+        correo: form.email,
+        contraseña: form.password,
+        telefono: form.telefono,
+      });
       toast('Cuenta creada exitosamente', 'success');
       navigate('/login');
-    } catch {
+    } catch (error) {
       toast('Error al crear la cuenta', 'error');
     } finally {
       setLoading(false);

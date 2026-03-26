@@ -1,12 +1,21 @@
 from pydantic import BaseModel
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    correo: str
+    contraseña: str
+
+class RegisterRequest(BaseModel):
+    nombre: str
+    apellido: str | None = ""
+    correo: str
+    contraseña: str
+    telefono: str | None = ""
+    direccion: str | None = ""
+    fecha_nacimiento: str | None = ""
+    id_tipo_documento: int | None = None
 
 class EmailRequest(BaseModel):
-    email: str
+    correo: str
 
 class ResetRequest(BaseModel):
-    token: str
-    new_password: str
+    contraseña: str

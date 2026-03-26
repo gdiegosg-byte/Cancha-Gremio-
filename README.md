@@ -3,7 +3,7 @@
 
 **Integrantes:**
 
-* Valentina Medina
+
 * Diego Palencia
 * Julián Avilez
 * Erik Crespo
@@ -103,5 +103,96 @@ Al centralizar todos los procesos en una sola plataforma, se logra:
 * Reducir el papeleo físico y los tiempos de gestión.
 * Mejorar la comunicación mediante notificaciones automáticas.
 * Facilitar la toma de decisiones gracias a reportes y estadísticas.
+
+
+### 2. Levantar la base de datos
+
+```bash
+docker compose up -d
+docker compose ps
+# Debe mostrar nn_auth_db con estado "healthy"
+```
+
+### 3. Configurar el Backend
+
+```bash
+cd be
+
+# Crear entorno virtual
+python -m venv .venv
+
+# Activar entorno virtual
+source .venv/Scripts/activate    # Windows (Git Bash)
+source .venv/bin/activate        # Linux/macOS
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Configurar variables de entorno
+cp .env.example .env
+
+# Ejecutar migraciones
+alembic upgrade head
+```
+
+### 4. Configurar el Frontend
+
+```bash
+cd fe
+pnpm install
+cp .env.example .env
+```
+
+---
+
+## ▶️ Ejecución
+
+```bash
+# Terminal 1 — Base de datos
+docker compose up -d
+
+# Terminal 2 — Backend (FastAPI)
+cd be && source .venv/Scripts/activate
+uvicorn app.main:app --reload
+# → API en http://localhost:8000
+# → Swagger UI en http://localhost:8000/docs
+
+# Terminal 3 — Frontend (React)
+cd fe && pnpm dev
+# → App en http://localhost:5173
+```
+
+---
+
+## 🧪 Testing
+
+### Backend
+
+```bash
+cd be && source .venv/Scripts/activate
+
+# Todos los tests
+pytest -v
+
+# Con cobertura
+pytest --cov=app --cov-report=term-missing
+```
+
+**Resultado:** ✅ 32/32 tests pasando
+
+### Frontend
+
+```bash
+cd fe
+
+# Todos los tests
+pnpm test
+
+# Con cobertura
+pnpm test:coverage
+```
+
+**Resultado:** ✅ 82/82 tests pasando
+
 
 En conclusión, el proyecto cumple con el objetivo de modernizar y organizar la operación de la cancha, mejorando significativamente la experiencia tanto de los clientes como de los administradores.

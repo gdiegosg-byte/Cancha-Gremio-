@@ -7,6 +7,7 @@ import { ToastProvider } from '@/context/ToastContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Pages
+import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -27,10 +28,10 @@ export default function App() {
         <ToastProvider>
           <Routes>
             {/* Public */}
-            <Route path="/login"    element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password"  element={<ResetPassword />} /> 
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Protected - All authenticated users */}
             <Route path="/reservas" element={
@@ -54,9 +55,9 @@ export default function App() {
               <ProtectedRoute requiredRole="admin"><ReportesPage /></ProtectedRoute>
             } />
 
-            {/* Redirect */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Public landing y accesos */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ToastProvider>
       </AuthProvider>

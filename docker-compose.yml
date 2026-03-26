@@ -1,24 +1,52 @@
-# ¿Qué? Configura PostgreSQL 17 como contenedor Docker
-# ¿Para qué? Provee la base de datos sin instalar PostgreSQL en el sistema
-# ¿Impacto? Sin esto el backend no puede conectarse a la base de datos
+# Que: Configuracion de Docker Compose para servicios de desarrollo
+# Para que: Levantar PostgreSQL 17 con un solo comando para CANCHA SINTETICA
+# Impacto: Sin este archivo no podemos iniciar la base de datos del proyecto
 
 services:
   db:
-    image: postgres:17
-    container_name: cancha_gremio_db
+    image: postgres:17-alpine
+    container_name: cancha_sintetica_db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-cancha_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cancha_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-cancha_gremio}
+      POSTGRES_USER: cancha_user
+      POSTGRES_PASSWORD: cancha_password
+      POSTGRES_DB: cancha_sintetica_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - cancha_sintetica_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cancha_user}"]
+      test: [ "CMD-SHELL", "pg_isready -U cancha_user -d cancha_sintetica_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  be:
+    build: ./BE
+    container_name: cancha_be
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://cancha_user:cancha_password@db:5432/cancha_sintetica_db
+      SECRET_KEY: clave_super_secreta_cancha_gremio_2024
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      DEBUG: "True"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  fe:
+    build: ./FE
+    container_name: cancha_fe
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8001
+    depends_on:
+      - be
+
 volumes:
-  postgres_data:
+  cancha_sintetica_data:
