@@ -1,10 +1,10 @@
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
-
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { ReactNode } from 'react';
 
 // Pages
 import LandingPage from '@/pages/LandingPage';
@@ -17,48 +17,62 @@ import EventosPage from '@/pages/EventosPage';
 import MantenimientoPage from '@/pages/MantenimientoPage';
 import ReportesPage from '@/pages/ReportesPage';
 
+function PublicRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 // =============================================
 // App Root
 // =============================================
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/registro" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Protected - All authenticated users */}
+      <Route path="/reservas" element={
+        <ProtectedRoute><ReservasPage /></ProtectedRoute>
+      } />
+      <Route path="/eventos" element={
+        <ProtectedRoute><EventosPage /></ProtectedRoute>
+      } />
+
+      {/* Protected - Admin only */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute requiredRole="admin"><DashboardPage /></ProtectedRoute>
+      } />
+      <Route path="/clientes" element={
+        <ProtectedRoute requiredRole="admin"><ClientesPage /></ProtectedRoute>
+      } />
+      <Route path="/mantenimiento" element={
+        <ProtectedRoute requiredRole="admin"><MantenimientoPage /></ProtectedRoute>
+      } />
+      <Route path="/reportes" element={
+        <ProtectedRoute requiredRole="admin"><ReportesPage /></ProtectedRoute>
+      } />
+
+      {/* Landing */}
+      <Route path="/" element={
+        <PublicRoute><LandingPage /></PublicRoute>
+      } />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <Routes>
-            {/* Public */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/registro" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-
-            {/* Protected - All authenticated users */}
-            <Route path="/reservas" element={
-              <ProtectedRoute><ReservasPage /></ProtectedRoute>
-            } />
-            <Route path="/eventos" element={
-              <ProtectedRoute><EventosPage /></ProtectedRoute>
-            } />
-
-            {/* Protected - Admin only */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute requiredRole="admin"><DashboardPage /></ProtectedRoute>
-            } />
-            <Route path="/clientes" element={
-              <ProtectedRoute requiredRole="admin"><ClientesPage /></ProtectedRoute>
-            } />
-            <Route path="/mantenimiento" element={
-              <ProtectedRoute requiredRole="admin"><MantenimientoPage /></ProtectedRoute>
-            } />
-            <Route path="/reportes" element={
-              <ProtectedRoute requiredRole="admin"><ReportesPage /></ProtectedRoute>
-            } />
-
-            {/* Public landing y accesos */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AppRoutes />
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
