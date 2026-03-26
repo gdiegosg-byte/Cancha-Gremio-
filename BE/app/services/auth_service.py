@@ -1,5 +1,5 @@
 import bcrypt
-import jwt
+from jose import jwt
 from fastapi import HTTPException
 
 SECRET = "supersecret"
