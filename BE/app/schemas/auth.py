@@ -2,13 +2,13 @@ from pydantic import BaseModel
 
 class LoginRequest(BaseModel):
     correo: str
-    contraseña: str
+    password: str
 
 class RegisterRequest(BaseModel):
     nombre: str
     apellido: str | None = ""
     correo: str
-    contraseña: str
+    password: str
     telefono: str | None = ""
     direccion: str | None = ""
     fecha_nacimiento: str | None = ""
@@ -18,4 +18,4 @@ class EmailRequest(BaseModel):
     correo: str
 
 class ResetRequest(BaseModel):
-    contraseña: str
+    password: str

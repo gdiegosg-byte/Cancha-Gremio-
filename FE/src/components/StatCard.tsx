@@ -3,7 +3,6 @@ import { ReactNode } from 'react';
 // =============================================
 // Stat Card — for dashboard metrics
 // =============================================
-
 interface StatCardProps {
   label: string;
   value: string | number;

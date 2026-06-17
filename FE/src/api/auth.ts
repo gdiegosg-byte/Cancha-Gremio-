@@ -11,8 +11,8 @@ export const authApi = {
   // POST /api/auth/login
   login: (email: string, password: string) =>
     api.post<{ token: string; usuario: { id_usuario: number; nombre: string; correo: string; id_rol: number; nombre_rol: string } }>(
-      '/api/auth/login',
-      { correo: email, contraseña: password }   // BE espera correo/contraseña
+      '/api/v1/auth/login',
+      { correo: email, password: password }   // BE espera correo/contraseña
     ),
 
   // POST /api/auth/registro  ← BE usa /registro no /register

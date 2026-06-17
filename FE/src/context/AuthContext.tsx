@@ -1,10 +1,6 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { AuthState, User } from '@/types';
 
-// =============================================
-// Auth Context — conectado a BE real
-// =============================================
-
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -29,13 +25,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'LOGIN_SUCCESS':
-      return {
-        ...state,
-        user: action.payload.user,
-        token: action.payload.token,
-        isAuthenticated: true,
-        isLoading: false,
-      };
+      return { ...state, user: action.payload.user, token: action.payload.token, isAuthenticated: true, isLoading: false };
     case 'LOGOUT':
       return { ...initialState, isLoading: false };
     case 'UPDATE_USER':
@@ -47,15 +37,13 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// URL del backend — definida en FE/.env como VITE_API_URL=http://localhost:3001
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Rehydrate sesion al cargar la app
   useEffect(() => {
-    const token   = localStorage.getItem('cg_token');
+    const token = localStorage.getItem('cg_token');
     const userStr = localStorage.getItem('cg_user');
     if (token && userStr) {
       try {
@@ -69,35 +57,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── LOGIN → llama POST /api/auth/login ──────────────────────
   async function login(email: string, password: string) {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ correo: email, contraseña: password }),
+        body: JSON.stringify({ correo: email, password: password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.mensaje || 'Error al iniciar sesión');
+        throw new Error(data.detail || 'Error al iniciar sesión');
       }
 
-      // data = { token, usuario: { id_usuario, nombre, correo, id_rol, nombre_rol } }
       const user: User = {
-        id:        String(data.usuario.id_usuario),
-        nombre:    data.usuario.nombre,
-        apellido:  '',
-        email:     data.usuario.correo,
-        telefono:  data.usuario.telefono || '',
-        rol:       data.usuario.id_rol === 1 ? 'admin' : 'cliente',
+        id: String(data.usuario.id_usuario),
+        nombre: data.usuario.nombre,
+        apellido: '',
+        email: data.usuario.correo,
+        telefono: data.usuario.telefono || '',
+        rol: data.usuario.nombre_rol === 'admin' ? 'admin' : 'cliente',
         createdAt: new Date().toISOString(),
       };
 
       localStorage.setItem('cg_token', data.token);
-      localStorage.setItem('cg_user',  JSON.stringify(user));
+      localStorage.setItem('cg_user', JSON.stringify(user));
       dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: data.token } });
     } catch (err) {
       dispatch({ type: 'SET_LOADING', payload: false });
