@@ -10,7 +10,7 @@ from app.models.reservation import Reservation
 
 router = APIRouter(prefix="/api/v1/reservations", tags=["reservations"])
 
-@router.get("/", response_model=list[ReservationResponse])
+@router.get("", response_model=list[ReservationResponse])
 def get_reservations(db: Session = Depends(get_db)):
     # ¿Qué? Obtiene todas las reservas
     # ¿Para qué? Mostrar el calendario de reservas

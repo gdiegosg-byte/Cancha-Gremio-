@@ -8,4 +8,16 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://cancha_be:8001',
+        changeOrigin: true,
+      },
+      '/dashboard': {
+        target: 'http://cancha_be:8001',
+        changeOrigin: true,
+      },
+    },
+  },
 })

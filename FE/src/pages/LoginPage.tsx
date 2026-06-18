@@ -214,7 +214,7 @@ export default function LoginPage() {
           fontFamily: 'var(--font-mono)',
           textAlign: 'center',
         }}>
-          Demo: admin@canchagremio.com / cualquier contraseña
+          Demo: admin@example.com / admin123
         </div>
       </div>
     </div>
