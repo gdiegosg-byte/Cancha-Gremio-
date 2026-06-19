@@ -76,7 +76,7 @@ export default function EventosPage() {
     setSelectedEvento(evento);
     setForm({
       nombre: user?.nombre || '',
-      correo: user?.correo || '',
+      correo: user?.email || '',
       telefono: user?.telefono || '',
     });
   }
