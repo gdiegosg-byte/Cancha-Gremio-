@@ -1,12 +1,28 @@
 import { useState } from 'react';
 import Layout from '@/components/Layout';
-import { Plus, Trophy, Users, Calendar, Clock } from 'lucide-react';
+import { Plus, Trophy, Users, Calendar, Clock, X, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 // =============================================
 // Eventos Page
 // =============================================
 
-const mockEventos = [
+interface Evento {
+  id: string;
+  titulo: string;
+  tipo: string;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  cupos: number;
+  cuposOcupados: number;
+  precio: number;
+  activo: boolean;
+  descripcion: string;
+}
+
+const initialEventos: Evento[] = [
   {
     id: '1', titulo: 'Torneo Relámpago Semanal',
     tipo: 'torneo', fecha: '2024-03-20', horaInicio: '08:00', horaFin: '18:00',
@@ -42,7 +58,58 @@ const tipoLabels: Record<string, string> = {
 };
 
 export default function EventosPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [eventos, setEventos] = useState<Evento[]>(initialEventos);
   const [tab, setTab] = useState<'proximos' | 'pasados'>('proximos');
+  
+  // Inscripción states
+  const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
+  const [form, setForm] = useState({
+    nombre: '',
+    correo: '',
+    telefono: '',
+  });
+  const [registering, setRegistering] = useState(false);
+
+  function handleOpenInscribir(evento: Evento) {
+    setSelectedEvento(evento);
+    setForm({
+      nombre: user?.nombre || '',
+      correo: user?.correo || '',
+      telefono: user?.telefono || '',
+    });
+  }
+
+  function handleCloseModal() {
+    setSelectedEvento(null);
+  }
+
+  async function handleConfirmInscription(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedEvento) return;
+
+    setRegistering(true);
+    // Simular retraso de red
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    try {
+      // Incrementar cupos ocupados localmente
+      setEventos(prev =>
+        prev.map(ev =>
+          ev.id === selectedEvento.id
+            ? { ...ev, cuposOcupados: ev.cuposOcupados + 1 }
+            : ev
+        )
+      );
+      toast(`¡Te has inscrito exitosamente en ${selectedEvento.titulo}!`, 'success');
+      handleCloseModal();
+    } catch (err) {
+      toast('Error al realizar la inscripción', 'error');
+    } finally {
+      setRegistering(false);
+    }
+  }
 
   return (
     <Layout title="EVENTOS">
@@ -67,7 +134,7 @@ export default function EventosPage() {
 
       {/* Events grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
-        {mockEventos.map(ev => {
+        {eventos.map(ev => {
           const porcentaje = Math.round((ev.cuposOcupados / ev.cupos) * 100);
           const lleno = ev.cuposOcupados >= ev.cupos;
           return (
@@ -160,7 +227,12 @@ export default function EventosPage() {
                   <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
                     Editar
                   </button>
-                  <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} disabled={lleno}>
+                  <button 
+                    onClick={() => handleOpenInscribir(ev)}
+                    className="btn btn-primary" 
+                    style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
+                    disabled={lleno}
+                  >
                     <Trophy size={12} /> {lleno ? 'Lleno' : 'Inscribir'}
                   </button>
                 </div>
@@ -169,6 +241,151 @@ export default function EventosPage() {
           );
         })}
       </div>
+
+      {/* Modal Inscripción */}
+      {selectedEvento && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: 20,
+        }}>
+          <div className="card fade-up" style={{
+            width: '100%',
+            maxWidth: 480,
+            padding: 28,
+            position: 'relative',
+            border: '1px solid var(--clr-border)',
+          }}>
+            {/* Close Button */}
+            <button 
+              onClick={handleCloseModal}
+              style={{
+                position: 'absolute',
+                top: 16, right: 16,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--clr-text-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {/* Modal Title */}
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.4rem',
+              letterSpacing: '0.05em',
+              marginBottom: 10,
+              color: 'var(--clr-neon)',
+            }}>
+              INSCRIPCIÓN AL EVENTO
+            </h2>
+            <p style={{
+              fontSize: '0.85rem',
+              color: 'var(--clr-text-muted)',
+              marginBottom: 20,
+            }}>
+              Registra tus datos para asegurar tu cupo en: <strong style={{ color: 'var(--clr-text)' }}>{selectedEvento.titulo}</strong>
+            </p>
+
+            <form onSubmit={handleConfirmInscription} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                  Nombre del Participante
+                </label>
+                <input
+                  value={form.nombre}
+                  onChange={e => setForm(prev => ({ ...prev, nombre: e.target.value }))}
+                  required
+                  placeholder="Escribe tu nombre"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                  Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  value={form.correo}
+                  onChange={e => setForm(prev => ({ ...prev, correo: e.target.value }))}
+                  required
+                  placeholder="ejemplo@correo.com"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                  Teléfono de Contacto
+                </label>
+                <input
+                  value={form.telefono}
+                  onChange={e => setForm(prev => ({ ...prev, telefono: e.target.value }))}
+                  required
+                  placeholder="3001234567"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div style={{
+                background: 'var(--clr-surface)',
+                padding: 14,
+                borderRadius: 8,
+                fontSize: '0.8rem',
+                color: 'var(--clr-text-muted)',
+                marginTop: 6,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                border: '1px solid var(--clr-border)',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Fecha:</span>
+                  <span style={{ color: 'var(--clr-text)', fontWeight: 600 }}>{selectedEvento.fecha}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Horario:</span>
+                  <span style={{ color: 'var(--clr-text)', fontWeight: 600 }}>{selectedEvento.horaInicio} a {selectedEvento.horaFin}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Valor a pagar:</span>
+                  <span style={{ color: 'var(--clr-neon)', fontWeight: 700 }}>
+                    {selectedEvento.precio === 0 ? 'GRATIS' : `$${selectedEvento.precio.toLocaleString()}`}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="btn btn-ghost"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={registering}
+                  className="btn btn-primary"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {registering ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Inscripción'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
