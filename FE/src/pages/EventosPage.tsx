@@ -308,8 +308,13 @@ export default function EventosPage() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
           {eventos.map(ev => {
-            const porcentaje = Math.round((ev.cuposOcupados / ev.cupos) * 100);
-            const lleno = ev.cuposOcupados >= ev.cupos;
+            const cupos = ev.cupos || 10;
+            const cuposOcupados = ev.cuposOcupados || 0;
+            const precio = ev.precio || 0;
+            const porcentaje = Math.round((cuposOcupados / cupos) * 100) || 0;
+            const lleno = cuposOcupados >= cupos;
+            const tipo = ev.tipo || 'torneo';
+
             return (
               <div
                 key={ev.id}
@@ -320,7 +325,7 @@ export default function EventosPage() {
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
-                  (e.currentTarget as HTMLDivElement).style.borderColor = tipoColors[ev.tipo] || 'var(--clr-neon)';
+                  (e.currentTarget as HTMLDivElement).style.borderColor = tipoColors[tipo] || 'var(--clr-neon)';
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
@@ -332,12 +337,12 @@ export default function EventosPage() {
                   <span style={{
                     fontSize: '0.7rem',
                     fontWeight: 600,
-                    color: tipoColors[ev.tipo] || 'var(--clr-neon)',
-                    background: `${tipoColors[ev.tipo] || 'var(--clr-neon)'}15`,
+                    color: tipoColors[tipo] || 'var(--clr-neon)',
+                    background: `${tipoColors[tipo] || 'var(--clr-neon)'}15`,
                     padding: '3px 8px',
                     borderRadius: 99,
                   }}>
-                    {tipoLabels[ev.tipo] || '🎉 Evento'}
+                    {tipoLabels[tipo] || '🎉 Evento'}
                   </span>
                   {lleno ? (
                     <span style={{
@@ -360,21 +365,21 @@ export default function EventosPage() {
                   )}
                 </div>
 
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>{ev.titulo}</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>{ev.titulo || 'Sin título'}</h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', marginBottom: 16, lineHeight: 1.5, minHeight: 40 }}>
-                  {ev.descripcion}
+                  {ev.descripcion || 'Sin descripción'}
                 </p>
 
                 {/* Info */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                    <Calendar size={13} /> {ev.fecha}
+                    <Calendar size={13} /> {ev.fecha || 'Sin fecha'}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                    <Clock size={13} /> {ev.horaInicio} – {ev.horaFin}
+                    <Clock size={13} /> {ev.horaInicio || '00:00'} – {ev.horaFin || '00:00'}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                    <Users size={13} /> {ev.cuposOcupados}/{ev.cupos} cupos
+                    <Users size={13} /> {cuposOcupados}/{cupos} cupos
                   </div>
                 </div>
 
@@ -384,7 +389,7 @@ export default function EventosPage() {
                     <div style={{
                       height: '100%',
                       width: `${porcentaje}%`,
-                      background: lleno ? 'var(--clr-danger)' : (tipoColors[ev.tipo] || 'var(--clr-neon)'),
+                      background: lleno ? 'var(--clr-danger)' : (tipoColors[tipo] || 'var(--clr-neon)'),
                       borderRadius: 99,
                       transition: 'width 0.5s ease',
                     }} />
@@ -394,7 +399,7 @@ export default function EventosPage() {
                 {/* Footer */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: 'var(--clr-neon)' }}>
-                    {ev.precio === 0 ? 'GRATIS' : `$${ev.precio.toLocaleString()}`}
+                    {precio === 0 ? 'GRATIS' : `$${precio.toLocaleString()}`}
                   </div>
                   
                   <div style={{ display: 'flex', gap: 8 }}>
