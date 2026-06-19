@@ -91,7 +91,7 @@ export default function EventosPage() {
     try {
       setLoading(true);
       const res = await eventosApi.getAll();
-      if (res.data && res.data.length > 0) {
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setEventos(res.data);
       } else {
         setEventos(initialEventos);
