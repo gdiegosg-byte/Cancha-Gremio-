@@ -55,3 +55,49 @@ def create_event(data: EventCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_event)
     return db_event
+
+@router.put("/{event_id}")
+def update_event(event_id: int, payload: dict, db: Session = Depends(get_db)):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        
+    name = payload.get("titulo") or payload.get("name")
+    description = payload.get("descripcion") or payload.get("description")
+    event_type = payload.get("tipo") or payload.get("event_type")
+    
+    if event_type:
+        if event_type == "torneo":
+            event.event_type = "TOURNAMENT"
+        elif event_type == "liga":
+            event.event_type = "LEAGUE"
+        elif event_type == "evento_especial":
+            event.event_type = "SPECIAL"
+        else:
+            event.event_type = event_type
+            
+    if name:
+        event.name = name
+    if description is not None:
+        event.description = description
+        
+    start_time = payload.get("start_time")
+    end_time = payload.get("end_time")
+    if start_time:
+        event.start_time = datetime.fromisoformat(start_time.replace("Z", ""))
+    if end_time:
+        event.end_time = datetime.fromisoformat(end_time.replace("Z", ""))
+        
+    db.commit()
+    db.refresh(event)
+    return event
+
+@router.delete("/{event_id}")
+def delete_event(event_id: int, db: Session = Depends(get_db)):
+    event = db.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        
+    db.delete(event)
+    db.commit()
+    return {"message": "Evento eliminado correctamente"}

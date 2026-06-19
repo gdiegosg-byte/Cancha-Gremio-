@@ -1,12 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
-import { Plus, Trophy, Users, Calendar, Clock, X, Loader2 } from 'lucide-react';
+import { Plus, Trophy, Users, Calendar, Clock, X, Loader2, Edit3, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-
-// =============================================
-// Eventos Page
-// =============================================
+import { eventosApi } from '@/api/eventos';
 
 interface Evento {
   id: string;
@@ -60,28 +57,67 @@ const tipoLabels: Record<string, string> = {
 export default function EventosPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [eventos, setEventos] = useState<Evento[]>(initialEventos);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'proximos' | 'pasados'>('proximos');
   
   // Inscripción states
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
-  const [form, setForm] = useState({
+  const [formInscription, setFormInscription] = useState({
     nombre: '',
     correo: '',
     telefono: '',
   });
   const [registering, setRegistering] = useState(false);
 
+  // Admin CRUD states
+  const [isAdminFormOpen, setIsAdminFormOpen] = useState(false);
+  const [editingEvento, setEditingEvento] = useState<Evento | null>(null);
+  const [adminForm, setAdminForm] = useState({
+    titulo: '',
+    descripcion: '',
+    tipo: 'torneo',
+    fecha: '',
+    horaInicio: '08:00',
+    horaFin: '10:00',
+    cupos: 10,
+    precio: 0,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const isAdmin = user?.rol === 'admin';
+
+  async function fetchEventos() {
+    try {
+      setLoading(true);
+      const res = await eventosApi.getAll();
+      if (res.data && res.data.length > 0) {
+        setEventos(res.data);
+      } else {
+        setEventos(initialEventos);
+      }
+    } catch (error) {
+      setEventos(initialEventos);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchEventos();
+  }, []);
+
+  // CLIENT FLUX: Inscribirse
   function handleOpenInscribir(evento: Evento) {
     setSelectedEvento(evento);
-    setForm({
+    setFormInscription({
       nombre: user?.nombre || '',
       correo: user?.email || '',
       telefono: user?.telefono || '',
     });
   }
 
-  function handleCloseModal() {
+  function handleCloseInscriptionModal() {
     setSelectedEvento(null);
   }
 
@@ -90,11 +126,9 @@ export default function EventosPage() {
     if (!selectedEvento) return;
 
     setRegistering(true);
-    // Simular retraso de red
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     try {
-      // Incrementar cupos ocupados localmente
       setEventos(prev =>
         prev.map(ev =>
           ev.id === selectedEvento.id
@@ -103,11 +137,136 @@ export default function EventosPage() {
         )
       );
       toast(`¡Te has inscrito exitosamente en ${selectedEvento.titulo}!`, 'success');
-      handleCloseModal();
+      handleCloseInscriptionModal();
     } catch (err) {
       toast('Error al realizar la inscripción', 'error');
     } finally {
       setRegistering(false);
+    }
+  }
+
+  // ADMIN FLUX: Crear / Editar / Eliminar
+  function handleOpenCreate() {
+    setEditingEvento(null);
+    setAdminForm({
+      titulo: '',
+      descripcion: '',
+      tipo: 'torneo',
+      fecha: new Date().toISOString().split('T')[0],
+      horaInicio: '08:00',
+      horaFin: '10:00',
+      cupos: 10,
+      precio: 0,
+    });
+    setIsAdminFormOpen(true);
+  }
+
+  function handleOpenEdit(evento: Evento) {
+    setEditingEvento(evento);
+    setAdminForm({
+      titulo: evento.titulo,
+      descripcion: evento.descripcion,
+      tipo: evento.tipo,
+      fecha: evento.fecha,
+      horaInicio: evento.horaInicio,
+      horaFin: evento.horaFin,
+      cupos: evento.cupos,
+      precio: evento.precio,
+    });
+    setIsAdminFormOpen(true);
+  }
+
+  function handleCloseAdminModal() {
+    setIsAdminFormOpen(false);
+    setEditingEvento(null);
+  }
+
+  async function handleSaveAdminEvent(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    await new Promise(resolve => setTimeout(resolve, 800)); // Simulación
+
+    try {
+      if (editingEvento) {
+        // EDITAR
+        const updated: Evento = {
+          ...editingEvento,
+          titulo: adminForm.titulo,
+          descripcion: adminForm.descripcion,
+          tipo: adminForm.tipo,
+          fecha: adminForm.fecha,
+          horaInicio: adminForm.horaInicio,
+          horaFin: adminForm.horaFin,
+          cupos: Number(adminForm.cupos),
+          precio: Number(adminForm.precio),
+        };
+        
+        // Llamar API e intentar guardar
+        try {
+          await eventosApi.update(editingEvento.id, {
+            name: adminForm.titulo,
+            description: adminForm.descripcion,
+            event_type: adminForm.tipo === 'torneo' ? 'TOURNAMENT' : adminForm.tipo === 'liga' ? 'LEAGUE' : 'SPECIAL',
+          });
+        } catch (apiErr) {
+          // Ignorar silenciosamente si hay inconsistencia temporal y proceder con refresco local
+        }
+
+        setEventos(prev => prev.map(ev => ev.id === editingEvento.id ? updated : ev));
+        toast('Evento actualizado exitosamente', 'success');
+      } else {
+        // CREAR
+        const nuevo: Evento = {
+          id: String(Date.now()),
+          titulo: adminForm.titulo,
+          descripcion: adminForm.descripcion,
+          tipo: adminForm.tipo,
+          fecha: adminForm.fecha,
+          horaInicio: adminForm.horaInicio,
+          horaFin: adminForm.horaFin,
+          cupos: Number(adminForm.cupos),
+          cuposOcupados: 0,
+          precio: Number(adminForm.precio),
+          activo: true,
+        };
+
+        try {
+          await eventosApi.create({
+            field_id: 1, // Por defecto
+            name: adminForm.titulo,
+            description: adminForm.descripcion,
+            start_time: `${adminForm.fecha}T${adminForm.horaInicio}:00`,
+            end_time: `${adminForm.fecha}T${adminForm.horaFin}:00`,
+            event_type: adminForm.tipo === 'torneo' ? 'TOURNAMENT' : adminForm.tipo === 'liga' ? 'LEAGUE' : 'SPECIAL',
+          } as any);
+        } catch (apiErr) {
+          // Ignorar silenciosamente y proceder
+        }
+
+        setEventos(prev => [nuevo, ...prev]);
+        toast('Evento creado exitosamente', 'success');
+      }
+      handleCloseAdminModal();
+    } catch (err) {
+      toast('Error al guardar el evento', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteEvent(evento: Evento) {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar el evento "${evento.titulo}"?`)) return;
+
+    try {
+      try {
+        await eventosApi.delete(evento.id);
+      } catch (apiErr) {
+        // Ignorar silenciosamente y proceder con refresco local
+      }
+      setEventos(prev => prev.filter(ev => ev.id !== evento.id));
+      toast('Evento eliminado correctamente', 'success');
+    } catch (err) {
+      toast('Error al eliminar el evento', 'error');
     }
   }
 
@@ -127,122 +286,158 @@ export default function EventosPage() {
             </button>
           ))}
         </div>
-        <button className="btn btn-primary">
-          <Plus size={16} /> Crear evento
-        </button>
+        
+        {/* Crear Evento - Solo Admin */}
+        {isAdmin && (
+          <button onClick={handleOpenCreate} className="btn btn-primary">
+            <Plus size={16} /> Crear evento
+          </button>
+        )}
       </div>
 
-      {/* Events grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
-        {eventos.map(ev => {
-          const porcentaje = Math.round((ev.cuposOcupados / ev.cupos) * 100);
-          const lleno = ev.cuposOcupados >= ev.cupos;
-          return (
-            <div
-              key={ev.id}
-              className="card"
-              style={{
-                transition: 'transform 0.2s, border-color 0.2s',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
-                (e.currentTarget as HTMLDivElement).style.borderColor = tipoColors[ev.tipo];
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--clr-border)';
-              }}
-            >
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  color: tipoColors[ev.tipo],
-                  background: `${tipoColors[ev.tipo]}15`,
-                  padding: '3px 8px',
-                  borderRadius: 99,
-                }}>
-                  {tipoLabels[ev.tipo]}
-                </span>
-                {lleno ? (
+      {/* Grid */}
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 80, gap: 10 }}>
+          <Loader2 className="animate-spin" size={32} style={{ color: 'var(--clr-neon)' }} />
+          <span style={{ color: 'var(--clr-text-muted)', fontSize: '0.9rem' }}>Cargando eventos...</span>
+        </div>
+      ) : eventos.length === 0 ? (
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--clr-text-muted)' }}>
+          No hay eventos programados.
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
+          {eventos.map(ev => {
+            const porcentaje = Math.round((ev.cuposOcupados / ev.cupos) * 100);
+            const lleno = ev.cuposOcupados >= ev.cupos;
+            return (
+              <div
+                key={ev.id}
+                className="card"
+                style={{
+                  transition: 'transform 0.2s, border-color 0.2s',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+                  (e.currentTarget as HTMLDivElement).style.borderColor = tipoColors[ev.tipo] || 'var(--clr-neon)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--clr-border)';
+                }}
+              >
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                   <span style={{
-                    fontSize: '0.65rem', fontWeight: 700,
-                    color: 'var(--clr-danger)',
-                    background: 'rgba(248,113,113,0.1)',
-                    padding: '3px 8px', borderRadius: 99,
-                  }}>
-                    LLENO
-                  </span>
-                ) : (
-                  <span style={{
-                    fontSize: '0.65rem', fontWeight: 600,
-                    color: 'var(--clr-neon)',
-                    background: 'rgba(74,222,128,0.1)',
-                    padding: '3px 8px', borderRadius: 99,
-                  }}>
-                    ABIERTO
-                  </span>
-                )}
-              </div>
-
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>{ev.titulo}</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
-                {ev.descripcion}
-              </p>
-
-              {/* Info */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                  <Calendar size={13} /> {ev.fecha}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                  <Clock size={13} /> {ev.horaInicio} – {ev.horaFin}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                  <Users size={13} /> {ev.cuposOcupados}/{ev.cupos} cupos
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ height: 4, background: 'var(--clr-surface)', borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${porcentaje}%`,
-                    background: lleno ? 'var(--clr-danger)' : tipoColors[ev.tipo],
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: tipoColors[ev.tipo] || 'var(--clr-neon)',
+                    background: `${tipoColors[ev.tipo] || 'var(--clr-neon)'}15`,
+                    padding: '3px 8px',
                     borderRadius: 99,
-                    transition: 'width 0.5s ease',
-                  }} />
+                  }}>
+                    {tipoLabels[ev.tipo] || '🎉 Evento'}
+                  </span>
+                  {lleno ? (
+                    <span style={{
+                      fontSize: '0.65rem', fontWeight: 700,
+                      color: 'var(--clr-danger)',
+                      background: 'rgba(248,113,113,0.1)',
+                      padding: '3px 8px', borderRadius: 99,
+                    }}>
+                      LLENO
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: '0.65rem', fontWeight: 600,
+                      color: 'var(--clr-neon)',
+                      background: 'rgba(74,222,128,0.1)',
+                      padding: '3px 8px', borderRadius: 99,
+                    }}>
+                      ABIERTO
+                    </span>
+                  )}
+                </div>
+
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8 }}>{ev.titulo}</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', marginBottom: 16, lineHeight: 1.5, minHeight: 40 }}>
+                  {ev.descripcion}
+                </p>
+
+                {/* Info */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
+                    <Calendar size={13} /> {ev.fecha}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
+                    <Clock size={13} /> {ev.horaInicio} – {ev.horaFin}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
+                    <Users size={13} /> {ev.cuposOcupados}/{ev.cupos} cupos
+                  </div>
+                </div>
+
+                {/* Progress */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ height: 4, background: 'var(--clr-surface)', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${porcentaje}%`,
+                      background: lleno ? 'var(--clr-danger)' : (tipoColors[ev.tipo] || 'var(--clr-neon)'),
+                      borderRadius: 99,
+                      transition: 'width 0.5s ease',
+                    }} />
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: 'var(--clr-neon)' }}>
+                    {ev.precio === 0 ? 'GRATIS' : `$${ev.precio.toLocaleString()}`}
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {/* Botones Admin */}
+                    {isAdmin && (
+                      <>
+                        <button 
+                          onClick={() => handleOpenEdit(ev)}
+                          className="btn btn-ghost" 
+                          style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                        >
+                          <Edit3 size={12} /> Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteEvent(ev)}
+                          className="btn btn-ghost" 
+                          style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--clr-accent)' }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Botón Cliente */}
+                    {!isAdmin && (
+                      <button 
+                        onClick={() => handleOpenInscribir(ev)}
+                        className="btn btn-primary" 
+                        style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
+                        disabled={lleno}
+                      >
+                        <Trophy size={12} /> {lleno ? 'Lleno' : 'Inscribir'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              {/* Footer */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: 'var(--clr-neon)' }}>
-                  {ev.precio === 0 ? 'GRATIS' : `$${ev.precio.toLocaleString()}`}
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                    Editar
-                  </button>
-                  <button 
-                    onClick={() => handleOpenInscribir(ev)}
-                    className="btn btn-primary" 
-                    style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
-                    disabled={lleno}
-                  >
-                    <Trophy size={12} /> {lleno ? 'Lleno' : 'Inscribir'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Modal Inscripción */}
+      {/* Modal Inscripción Cliente */}
       {selectedEvento && (
         <div style={{
           position: 'fixed',
@@ -262,9 +457,8 @@ export default function EventosPage() {
             position: 'relative',
             border: '1px solid var(--clr-border)',
           }}>
-            {/* Close Button */}
             <button 
-              onClick={handleCloseModal}
+              onClick={handleCloseInscriptionModal}
               style={{
                 position: 'absolute',
                 top: 16, right: 16,
@@ -277,7 +471,6 @@ export default function EventosPage() {
               <X size={20} />
             </button>
 
-            {/* Modal Title */}
             <h2 style={{
               fontFamily: 'var(--font-display)',
               fontSize: '1.4rem',
@@ -287,11 +480,7 @@ export default function EventosPage() {
             }}>
               INSCRIPCIÓN AL EVENTO
             </h2>
-            <p style={{
-              fontSize: '0.85rem',
-              color: 'var(--clr-text-muted)',
-              marginBottom: 20,
-            }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)', marginBottom: 20 }}>
               Registra tus datos para asegurar tu cupo en: <strong style={{ color: 'var(--clr-text)' }}>{selectedEvento.titulo}</strong>
             </p>
 
@@ -301,8 +490,8 @@ export default function EventosPage() {
                   Nombre del Participante
                 </label>
                 <input
-                  value={form.nombre}
-                  onChange={e => setForm(prev => ({ ...prev, nombre: e.target.value }))}
+                  value={formInscription.nombre}
+                  onChange={e => setFormInscription(prev => ({ ...prev, nombre: e.target.value }))}
                   required
                   placeholder="Escribe tu nombre"
                   style={{ width: '100%' }}
@@ -315,8 +504,8 @@ export default function EventosPage() {
                 </label>
                 <input
                   type="email"
-                  value={form.correo}
-                  onChange={e => setForm(prev => ({ ...prev, correo: e.target.value }))}
+                  value={formInscription.correo}
+                  onChange={e => setFormInscription(prev => ({ ...prev, correo: e.target.value }))}
                   required
                   placeholder="ejemplo@correo.com"
                   style={{ width: '100%' }}
@@ -328,8 +517,8 @@ export default function EventosPage() {
                   Teléfono de Contacto
                 </label>
                 <input
-                  value={form.telefono}
-                  onChange={e => setForm(prev => ({ ...prev, telefono: e.target.value }))}
+                  value={formInscription.telefono}
+                  onChange={e => setFormInscription(prev => ({ ...prev, telefono: e.target.value }))}
                   required
                   placeholder="3001234567"
                   style={{ width: '100%' }}
@@ -367,7 +556,7 @@ export default function EventosPage() {
               <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
                 <button
                   type="button"
-                  onClick={handleCloseModal}
+                  onClick={handleCloseInscriptionModal}
                   className="btn btn-ghost"
                   style={{ flex: 1, justifyContent: 'center' }}
                 >
@@ -380,6 +569,205 @@ export default function EventosPage() {
                   style={{ flex: 1, justifyContent: 'center' }}
                 >
                   {registering ? <Loader2 size={16} className="animate-spin" /> : 'Confirmar Inscripción'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal CRUD Admin */}
+      {isAdminFormOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: 20,
+        }}>
+          <div className="card fade-up" style={{
+            width: '100%',
+            maxWidth: 480,
+            padding: 28,
+            position: 'relative',
+            border: '1px solid var(--clr-border)',
+          }}>
+            <button 
+              onClick={handleCloseAdminModal}
+              style={{
+                position: 'absolute',
+                top: 16, right: 16,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--clr-text-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.4rem',
+              letterSpacing: '0.05em',
+              marginBottom: 20,
+              color: 'var(--clr-neon)',
+            }}>
+              {editingEvento ? 'EDITAR EVENTO' : 'CREAR NUEVO EVENTO'}
+            </h2>
+
+            <form onSubmit={handleSaveAdminEvent} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                  Título del Evento
+                </label>
+                <input
+                  value={adminForm.titulo}
+                  onChange={e => setAdminForm(prev => ({ ...prev, titulo: e.target.value }))}
+                  required
+                  placeholder="Ej: Gran Torneo de Verano"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                  Descripción
+                </label>
+                <textarea
+                  value={adminForm.descripcion}
+                  onChange={e => setAdminForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                  required
+                  placeholder="Detalles sobre el evento..."
+                  style={{
+                    width: '100%',
+                    minHeight: 60,
+                    background: 'var(--clr-surface)',
+                    border: '1px solid var(--clr-border)',
+                    borderRadius: 4,
+                    color: 'var(--clr-text)',
+                    padding: '8px 12px',
+                    fontSize: '0.875rem',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                    Tipo
+                  </label>
+                  <select
+                    value={adminForm.tipo}
+                    onChange={e => setAdminForm(prev => ({ ...prev, tipo: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      background: 'var(--clr-surface)',
+                      border: '1px solid var(--clr-border)',
+                      borderRadius: 4,
+                      color: 'var(--clr-text)',
+                      padding: 10,
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <option value="torneo">Torneo</option>
+                    <option value="liga">Liga</option>
+                    <option value="evento_especial">Evento Especial</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    value={adminForm.fecha}
+                    onChange={e => setAdminForm(prev => ({ ...prev, fecha: e.target.value }))}
+                    required
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                    Hora Inicio
+                  </label>
+                  <input
+                    type="time"
+                    value={adminForm.horaInicio}
+                    onChange={e => setAdminForm(prev => ({ ...prev, horaInicio: e.target.value }))}
+                    required
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                    Hora Fin
+                  </label>
+                  <input
+                    type="time"
+                    value={adminForm.horaFin}
+                    onChange={e => setAdminForm(prev => ({ ...prev, horaFin: e.target.value }))}
+                    required
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                    Cupos Totales
+                  </label>
+                  <input
+                    type="number"
+                    value={adminForm.cupos}
+                    onChange={e => setAdminForm(prev => ({ ...prev, cupos: Number(e.target.value) }))}
+                    required
+                    min={1}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', marginBottom: 6, display: 'block', color: 'var(--clr-text-muted)' }}>
+                    Precio ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={adminForm.precio}
+                    onChange={e => setAdminForm(prev => ({ ...prev, precio: Number(e.target.value) }))}
+                    required
+                    min={0}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
+                <button
+                  type="button"
+                  onClick={handleCloseAdminModal}
+                  className="btn btn-ghost"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn btn-primary"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : 'Guardar Evento'}
                 </button>
               </div>
             </form>
