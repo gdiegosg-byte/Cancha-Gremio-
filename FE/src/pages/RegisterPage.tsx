@@ -33,7 +33,7 @@ export default function RegisterPage() {
         nombre: form.nombre,
         apellido: form.apellido,
         correo: form.email,
-        contraseña: form.password,
+        password: form.password,
         telefono: form.telefono,
       });
       toast('Cuenta creada exitosamente', 'success');

@@ -18,8 +18,9 @@ export const authApi = {
   // POST /api/auth/registro  ← BE usa /registro no /register
   register: (data: {
     nombre: string;
+    apellido?: string;
     correo: string;
-    contraseña: string;
+    password: string;
     telefono?: string;
     direccion?: string;
     fecha_nacimiento?: string;
@@ -67,4 +68,8 @@ export const usersApi = {
   // PUT /api/admin/clientes/:id/estado
   toggleEstado: (id: number, estado: 'activo' | 'inactivo') =>
     api.put(`/api/admin/clientes/${id}/estado`, { estado }),
+
+  // PUT /api/admin/clientes/:id
+  update: (id: number, data: { nombre: string; correo: string; telefono: string }) =>
+    api.put(`/api/admin/clientes/${id}`, data),
 };
