@@ -19,16 +19,16 @@ class FieldCreate(BaseModel):
 class FieldResponse(BaseModel):
     id: int
     name: str
-    description: str
+    description: str | None = ""
     price_per_hour: float
     surface_type: str
     capacity: int
-    length_meters: float
-    width_meters: float
-    available_hour_start: str
-    available_hour_end: str
+    length_meters: float | None = 40.0
+    width_meters: float | None = 20.0
+    available_hour_start: str | None = "06:00"
+    available_hour_end: str | None = "22:00"
     is_active: bool
-    created_at: datetime
+    created_at: datetime | None = None
 
     class Config:
         from_attributes = True

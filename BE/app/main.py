@@ -9,7 +9,7 @@ app = FastAPI(
     title="Cancha Gremio API",
     description="Sistema de reservas para cancha sintética",
     version="1.0.0",
-    redirect_slashes=False
+    redirect_slashes=True
 )
 
 app.add_middleware(
