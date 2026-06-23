@@ -37,3 +37,35 @@ def toggle_client_status(user_id: int, payload: dict = Body(...), db: Session = 
         
     db.commit()
     return {"message": "Estado actualizado correctamente", "estado": "activo" if user.is_active else "inactivo"}
+
+@router.put("/{user_id}")
+def update_client(user_id: int, payload: dict = Body(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+    nombre = payload.get("nombre")
+    correo = payload.get("correo")
+    telefono = payload.get("telefono")
+    
+    if nombre:
+        user.name = nombre
+    if correo:
+        existing = db.query(User).filter(User.email.ilike(correo), User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="El correo ya está en uso por otro usuario")
+        user.email = correo
+    if telefono is not None:
+        user.phone = telefono
+        
+    db.commit()
+    db.refresh(user)
+    return {
+        "id_usuario": user.id,
+        "nombre": user.name,
+        "correo": user.email,
+        "telefono": user.phone,
+        "estado": "activo" if user.is_active else "inactivo",
+        "fecha_registro": user.created_at.strftime("%Y-%m-%d") if user.created_at else "",
+        "total_reservas": 0
+    }
