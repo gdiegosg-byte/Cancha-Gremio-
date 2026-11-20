@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENA ADSO - Guía Interactiva: Pruebas de Rendimiento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sena-green {
+            color: #39A900;
+        }
+
+        .bg-sena-green {
+            background-color: #39A900;
+        }
+
+        .border-sena-green {
+            border-color: #39A900;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navbar Header -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div
+                    class="w-10 h-10 rounded-lg bg-sena-green flex items-center justify-center font-bold text-white text-xl">
+                    <i class="fa-solid fa-gauge-high"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">SENA - ADSO | Guía Didáctica Clase 10</h1>
+                    <p class="text-xs text-slate-400">Pruebas de Rendimiento, Carga y Estrés (JMeter & K6)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 text-xs md:text-sm">
+                <span class="bg-slate-800 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700">
+                    <i class="fa-regular fa-clock mr-1"></i> Duración: 6 Horas
+                </span>
+                <span class="bg-sena-green/20 text-green-400 px-3 py-1.5 rounded-full border border-green-500/30">
+                    <i class="fa-solid fa-code-branch mr-1"></i> Competencia: 220501096
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Stepper -->
+    <div class="bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4">
+            <nav class="flex overflow-x-auto space-x-1 md:space-x-4 py-3 text-sm font-medium no-scrollbar">
+                <button onclick="switchTab('tab-1')" id="btn-tab-1"
+                    class="tab-btn flex items-center px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                    <span
+                        class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center mr-2">1</span>
+                    Reflexión Inicial
+                </button>
+                <button onclick="switchTab('tab-2')" id="btn-tab-2"
+                    class="tab-btn flex items-center px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                    <span
+                        class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs flex items-center justify-center mr-2">2</span>
+                    Conceptos & Métricas
+                </button>
+                <button onclick="switchTab('tab-3')" id="btn-tab-3"
+                    class="tab-btn flex items-center px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                    <span
+                        class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs flex items-center justify-center mr-2">3</span>
+                    Generador Script K6
+                </button>
+                <button onclick="switchTab('tab-4')" id="btn-tab-4"
+                    class="tab-btn flex items-center px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                    <span
+                        class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs flex items-center justify-center mr-2">4</span>
+                    Simulador & Análisis
+                </button>
+                <button onclick="switchTab('tab-5')" id="btn-tab-5"
+                    class="tab-btn flex items-center px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">
+                    <span
+                        class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs flex items-center justify-center mr-2">5</span>
+                    Generador de Informe
+                </button>
+                <button onclick="switchTab('tab-6')" id="btn-tab-6"
+                    class="tab-btn flex items-center px-4 py-2 rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200">
+                    <i class="fa-solid fa-globe mr-2"></i>
+                    APIs Públicas Recomendadas
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+        <!-- TAB 1: Reflexión Inicial -->
+        <section id="tab-1" class="tab-content block space-y-6">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i class="fa-solid fa-brain text-xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900">3.1 Actividad de Reflexión Inicial (0.5 Horas)</h2>
+                </div>
+                <p class="text-slate-600 mb-6">
+                    Sistemas como Black Friday, inscripciones universitarias o plataformas de boletas suelen colapsar.
+                    Analicemos el porqué antes de escribir la primera línea de código de prueba.
+                </p>
+
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                        <h3 class="font-semibold text-slate-800 mb-2 flex items-center text-sm">
+                            <i class="fa-solid fa-bug text-red-500 mr-2"></i> Bug Funcional vs Saturación
+                        </h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Un bug es una falla de lógica en el código (ej. cálculo incorrecto). Un fallo por saturación
+                            ocurre cuando los recursos de hardware (CPU, RAM, DB Connections) se agotan por concurrencia
+                            masiva.
+                        </p>
+                    </div>
+                    <div class="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                        <h3 class="font-semibold text-slate-800 mb-2 flex items-center text-sm">
+                            <i class="fa-solid fa-hand-holding-dollar text-emerald-600 mr-2"></i> Impacto Organizacional
+                        </h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Una caída del sistema implica pérdida de ventas directas, daño irreparable de la reputación
+                            de la marca y posibles penalizaciones contractuales o legales.
+                        </p>
+                    </div>
+                    <div class="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                        <h3 class="font-semibold text-slate-800 mb-2 flex items-center text-sm">
+                            <i class="fa-solid fa-vial-circle-check text-indigo-600 mr-2"></i> Insuficiencia Unitaria
+                        </h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Las pruebas unitarias y de integración prueban la app con 1 solo usuario. No simulan
+                            contención de hilos, bloqueos en base de datos ni saturación de sockets de red.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-5">
+                    <h4 class="font-bold text-indigo-900 mb-2 text-sm">
+                        <i class="fa-regular fa-lightbulb mr-1"></i> Tarea de Autoevaluación
+                    </h4>
+                    <p class="text-xs text-indigo-800 mb-3">Redacta una breve conclusión respondiendo: ¿Por qué una API
+                        que responde perfectamente en Postman con 1 petición puede fallar con 500 solicitudes al tiempo?
+                    </p>
+                    <textarea id="reflection-note" rows="3"
+                        class="w-full text-sm p-3 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="Escribe tu reflexión aquí para incluirla en tus notas..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Conceptos & Métricas -->
+        <section id="tab-2" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-900 mb-4">3.2 Contextualización: Tipos de Pruebas de Rendimiento
+                </h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div class="border border-blue-200 bg-blue-50/50 p-4 rounded-xl">
+                        <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Rendimiento
+                            (Performance)</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">Carga Normal</h3>
+                        <p class="text-xs text-slate-600 mt-2">Mide la velocidad y latencia bajo condiciones normales de
+                            operación.</p>
+                        <div class="mt-3 text-xs bg-white p-2 rounded border border-blue-100 font-mono text-blue-900">
+                            Métrica: Response Time (ms)</div>
+                    </div>
+                    <div class="border border-emerald-200 bg-emerald-50/50 p-4 rounded-xl">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Carga (Load
+                            Testing)</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">Carga Esperada</h3>
+                        <p class="text-xs text-slate-600 mt-2">Evalúa el comportamiento con la cantidad esperada de
+                            usuarios activos.</p>
+                        <div
+                            class="mt-3 text-xs bg-white p-2 rounded border border-emerald-100 font-mono text-emerald-900">
+                            Métrica: Concurrency / CPU-RAM</div>
+                    </div>
+                    <div class="border border-red-200 bg-red-50/50 p-4 rounded-xl">
+                        <span class="text-xs font-bold uppercase tracking-wider text-red-600">Estrés (Stress
+                            Testing)</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">Punto de Quiebre</h3>
+                        <p class="text-xs text-slate-600 mt-2">Lleva al sistema más allá del límite para hallar el
+                            *Breaking Point* y tiempo de recuperación.</p>
+                        <div class="mt-3 text-xs bg-white p-2 rounded border border-red-100 font-mono text-red-900">
+                            Métrica: Error Rate (%)</div>
+                    </div>
+                    <div class="border border-amber-200 bg-amber-50/50 p-4 rounded-xl">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Picos (Spike
+                            Testing)</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">Súbitas Ráfagas</h3>
+                        <p class="text-xs text-slate-600 mt-2">Aumentos drásticos e instantáneos de tráfico para probar
+                            la resiliencia.</p>
+                        <div class="mt-3 text-xs bg-white p-2 rounded border border-amber-100 font-mono text-amber-900">
+                            Métrica: Recovery Time</div>
+                    </div>
+                    <div class="border border-purple-200 bg-purple-50/50 p-4 rounded-xl">
+                        <span class="text-xs font-bold uppercase tracking-wider text-purple-600">Volumen (Volume)</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">Base de Datos</h3>
+                        <p class="text-xs text-slate-600 mt-2">Prueba el rendimiento con millones de registros
+                            almacenados en la base de datos.</p>
+                        <div
+                            class="mt-3 text-xs bg-white p-2 rounded border border-purple-100 font-mono text-purple-900">
+                            Métrica: DB Query Time</div>
+                    </div>
+                    <div
+                        class="border border-slate-200 bg-slate-100 p-4 rounded-xl flex flex-col justify-center items-center text-center">
+                        <i class="fa-solid fa-scale-balanced text-3xl text-slate-500 mb-2"></i>
+                        <span class="font-bold text-slate-800 text-sm">JMeter vs K6</span>
+                        <p class="text-xs text-slate-500 mt-1">GUI Java vs Scripting JS optimizado en Go para CI/CD</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: Generador Script K6 -->
+        <section id="tab-3" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">3.3 Configuración de Script K6</h2>
+                        <p class="text-xs text-slate-500">Genera el código JavaScript corregido para ejecutar tus
+                            pruebas de 100, 500 y 1000 usuarios concurrentes.</p>
+                    </div>
+                    <button onclick="copyK6Script()"
+                        class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs hover:bg-slate-700 transition flex items-center">
+                        <i class="fa-regular fa-copy mr-1.5"></i> Copiar Código
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">URL Objetivo (Endpoint
+                            API):</label>
+                        <input type="text" id="target-url"
+                            class="w-full text-xs p-2 border border-slate-300 rounded font-mono"
+                            value="https://test.k6.io/pi.php?decimals=3">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Umbral P95 Máximo (ms):</label>
+                        <input type="number" id="threshold-p95"
+                            class="w-full text-xs p-2 border border-slate-300 rounded font-mono" value="1500"
+                            oninput="updateK6Code()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tasa Máxima de Error (%):</label>
+                        <input type="number" id="threshold-error"
+                            class="w-full text-xs p-2 border border-slate-300 rounded font-mono" value="5"
+                            oninput="updateK6Code()">
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <pre class="bg-slate-950 text-emerald-400 p-4 rounded-xl text-xs font-mono overflow-x-auto border border-slate-800"
+                        id="k6-code-block"></pre>
+                </div>
+                <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>Nota técnica de corrección:</strong>
+                    El fragmento original de la guía presentaba sintaxis errónea en las importaciones y la propiedad
+                    <code>thresholds</code>. El generador superior genera el script K6 100% sintácticamente válido.
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: Simulador & Análisis -->
+        <section id="tab-4" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-900 mb-2">Simulador de Resultados e Interpretación de Métricas
+                </h2>
+                <p class="text-xs text-slate-500 mb-6">Modifica la carga de usuarios concurrentes para observar el
+                    impacto dinámico en los tiempos de respuesta, latencia y tasa de errores.</p>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-sm">Controles de Simulación</h3>
+                        <div>
+                            <label class="block text-xs text-slate-600 mb-1">Carga de Usuarios Concurrentes
+                                (VUs):</label>
+                            <input type="range" id="sim-vus" min="50" max="1500" step="50" value="500"
+                                class="w-full accent-emerald-600" oninput="runSimulation()">
+                            <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>100 (Normal)</span>
+                                <span class="font-bold text-emerald-700" id="vu-val">500 VUs</span>
+                                <span>1000 (Estrés)</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-600 mb-1">Capacidad Estimada Servidor (RPS
+                                Max):</label>
+                            <select id="sim-capacity"
+                                class="w-full text-xs p-2 border border-slate-300 rounded bg-white"
+                                onchange="runSimulation()">
+                                <option value="small">Servidor Básico (2 vCPU, 4GB RAM) - Límite ~400 VUs</option>
+                                <option value="medium" selected>Servidor Estándar (4 vCPU, 8GB RAM) - Límite ~800 VUs
+                                </option>
+                                <option value="high">Servidor Robusto (8 vCPU, 16GB RAM) - Límite ~1200 VUs</option>
+                            </select>
+                        </div>
+
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
+                            <h4 class="text-xs font-bold text-slate-700">Métricas Simuladas Obtenidas:</h4>
+                            <div class="flex justify-between text-xs">
+                                <span>Tiempo Respuesta P95:</span>
+                                <span class="font-mono font-bold" id="m-p95">450 ms</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span>Throughput (RPS):</span>
+                                <span class="font-mono font-bold" id="m-rps">320 req/s</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span>Tasa de Error:</span>
+                                <span class="font-mono font-bold" id="m-error">0.0 %</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span>Uso de CPU:</span>
+                                <span class="font-mono font-bold" id="m-cpu">42 %</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="h-64 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <canvas id="perfChart"></canvas>
+                        </div>
+                        <div id="diagnostic-box" class="p-4 rounded-xl text-xs leading-relaxed border">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: Generador de Informe -->
+        <section id="tab-5" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">3.4 Actividad de Transferencia - Generador de
+                            Informe Técnico</h2>
+                        <p class="text-xs text-slate-500">Diligencia este formulario para armar tu informe ejecutivo
+                            listo para exportar en Markdown o PDF.</p>
+                    </div>
+                    <button onclick="downloadReport()"
+                        class="px-4 py-2 bg-sena-green text-white font-semibold rounded-lg text-xs hover:bg-emerald-700 transition flex items-center shadow">
+                        <i class="fa-solid fa-file-arrow-down mr-1.5"></i> Descargar Informe (.md)
+                    </button>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <label class="block font-semibold mb-1">Nombre del Aprendiz / Equipo:</label>
+                        <input type="text" id="report-author" class="w-full p-2 border border-slate-300 rounded"
+                            placeholder="Ej. Equipo ADSO 228118">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Herramienta Utilizada:</label>
+                        <select id="report-tool" class="w-full p-2 border border-slate-300 rounded">
+                            <option value="Grafana K6">Grafana K6 (CLI / JS)</option>
+                            <option value="Apache JMeter">Apache JMeter (GUI / Java)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block font-semibold mb-1">Especificaciones del Entorno de Pruebas:</label>
+                        <input type="text" id="report-env" class="w-full p-2 border border-slate-300 rounded"
+                            value="Servidor Node.js Express / Base de datos PostgreSQL en Docker. Localhost PC Core i7 16GB RAM.">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block font-semibold mb-1">Cuellos de Botella (Bottlenecks) Identificados:</label>
+                        <textarea id="report-bottlenecks" rows="2" class="w-full p-2 border border-slate-300 rounded"
+                            placeholder="Ej. A partir de 600 usuarios, el tiempo de respuesta P95 superó los 2000ms debido a la falta de índices en la tabla de productos."></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block font-semibold mb-1">Recomendaciones de Optimización Técnica:</label>
+                        <textarea id="report-recommendations" rows="2"
+                            class="w-full p-2 border border-slate-300 rounded"
+                            placeholder="Ej. 1. Crear índices B-Tree en la columna categoria_id. 2. Implementar caché con Redis para la consulta GET /productos. 3. Configurar connection pool a 50 conexiones."></textarea>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: APIs Públicas Recomendadas -->
+        <section id="tab-6" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center space-x-3 mb-2">
+                    <div class="p-2 bg-amber-100 text-amber-800 rounded-lg"><i class="fa-solid fa-server text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Propuestas de APIs y Sitios Web Públicos para el
+                            Taller</h2>
+                        <p class="text-xs text-slate-500">Sitios autorizados para pruebas de carga y simulación de
+                            tráfico sin infringir políticas de uso.</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 mt-6">
+                    <!-- API 1 -->
+                    <div
+                        class="border border-slate-200 rounded-xl p-5 hover:shadow-md transition bg-gradient-to-b from-slate-50 to-white flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span
+                                    class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Oficial
+                                    K6</span>
+                                <i class="fa-solid fa-vial text-emerald-600 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-base mb-1">1. Grafana K6 Test Targets</h3>
+                            <p class="text-xs text-slate-600 mb-3">Sitios expresamente diseñados y alojados por la
+                                empresa creadora de K6 para realizar pruebas de carga y estrés por estudiantes y
+                                desarrolladores.</p>
+                            <div class="space-y-1 text-xs font-mono bg-slate-100 p-2.5 rounded border border-slate-200">
+                                <div class="text-slate-700"><strong>GET:</strong> https://test.k6.io</div>
+                                <div class="text-slate-700"><strong>POST:</strong> https://test.k6.io/login.php</div>
+                                <div class="text-slate-700"><strong>PI:</strong> https://test.k6.io/pi.php?decimals=100
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                            <strong>Uso Recomendado:</strong> Pruebas de 100 a 1000 usuarios VUs sin riesgo de bloqueo
+                            de IP.
+                        </div>
+                    </div>
+
+                    <!-- API 2 -->
+                    <div
+                        class="border border-slate-200 rounded-xl p-5 hover:shadow-md transition bg-gradient-to-b from-slate-50 to-white flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span
+                                    class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Simulación
+                                    E-Commerce</span>
+                                <i class="fa-solid fa-cart-shopping text-blue-600 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-base mb-1">2. DummyJSON API</h3>
+                            <p class="text-xs text-slate-600 mb-3">API REST pública excelente para simular el
+                                comportamiento de catálogos de productos, carritos de compras y autenticación JWT reales
+                                de ADSO.</p>
+                            <div class="space-y-1 text-xs font-mono bg-slate-100 p-2.5 rounded border border-slate-200">
+                                <div class="text-slate-700"><strong>GET:</strong> https://dummyjson.com/products</div>
+                                <div class="text-slate-700"><strong>SEARCH:</strong>
+                                    https://dummyjson.com/products/search?q=phone</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                            <strong>Uso Recomendado:</strong> Pruebas de lectura JSON y evaluación de latencias de carga
+                            de productos.
+                        </div>
+                    </div>
+
+                    <!-- API 3 -->
+                    <div
+                        class="border border-slate-200 rounded-xl p-5 hover:shadow-md transition bg-gradient-to-b from-slate-50 to-white flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span
+                                    class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Diagnóstico
+                                    HTTP</span>
+                                <i class="fa-solid fa-network-wired text-purple-600 text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-base mb-1">3. HTTPBin Test Site</h3>
+                            <p class="text-xs text-slate-600 mb-3">Servicio de pruebas HTTP para probar respuestas con
+                                retardos programados, códigos de error simulados (500, 429) y picos de tráfico.</p>
+                            <div class="space-y-1 text-xs font-mono bg-slate-100 p-2.5 rounded border border-slate-200">
+                                <div class="text-slate-700"><strong>Delay:</strong> https://httpbin.test.k6.io/delay/2
+                                </div>
+                                <div class="text-slate-700"><strong>Status 500:</strong>
+                                    https://httpbin.test.k6.io/status/500</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                            <strong>Uso Recomendado:</strong> Validación de umbrales (*thresholds*) de tasa de error y
+                            timeouts.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            SENA Centro de Gestión de Mercados, Logística y T.I. - Programa ADSO (Análisis y Desarrollo de Software)
+        </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // Tab Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'font-semibold', 'border', 'border-emerald-200');
+                btn.classList.add('text-slate-600');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('bg-emerald-50', 'text-emerald-700', 'font-semibold', 'border', 'border-emerald-200');
+
+            if (tabId === 'tab-4') {
+                setTimeout(initChart, 100);
+            }
+        }
+
+        // K6 Script Generator
+        function updateK6Code() {
+            const url = document.getElementById('target-url').value || 'http://localhost:3000/api/v1/productos';
+            const p95 = document.getElementById('threshold-p95').value || 1500;
+            const err = (parseFloat(document.getElementById('threshold-error').value || 5) / 100).toFixed(2);
+
+            const code = `import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  stages: [
+    { duration: '30s', target: 100 },  // Nivel 1: Ramp-up a 100 usuarios (Carga Normal)
+    { duration: '1m',  target: 500 },  // Nivel 2: Escalado a 500 usuarios (Carga Alta)
+    { duration: '1m',  target: 1000 }, // Nivel 3: Pico de estrés a 1000 usuarios
+    { duration: '30s', target: 0 },    // Ramp-down de cierre progresivo
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<${p95}'], // El 95% de peticiones debe responder en < ${p95}ms
+    http_req_failed: ['rate<${err}'],      // Tasa de fallos menor al ${(err * 100).toFixed(0)}%
+  },
+};
+
+export default function () {
+  const res = http.get('${url}');
+  check(res, {
+    'estado es HTTP 200': (r) => r.status === 200,
+    'tiempo de respuesta aceptable': (r) => r.timings.duration < ${p95},
+  });
+  sleep(1);
+}`;
+            document.getElementById('k6-code-block').innerText = code;
+        }
+
+        function copyK6Script() {
+            const code = document.getElementById('k6-code-block').innerText;
+            navigator.clipboard.writeText(code);
+            alert('¡Script K6 copiado al portapapeles!');
+        }
+
+        // Performance Chart & Simulator
+        let perfChartInstance = null;
+
+        function initChart() {
+            const ctx = document.getElementById('perfChart').getContext('2d');
+            if (perfChartInstance) perfChartInstance.destroy();
+
+            perfChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['0s', '30s (100 VUs)', '1m30s (500 VUs)', '2m30s (1000 VUs)', '3m (0 VUs)'],
+                    datasets: [
+                        {
+                            label: 'Tiempo de Respuesta P95 (ms)',
+                            data: [120, 250, 650, 1850, 100],
+                            borderColor: '#0284c7',
+                            backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Tasa de Error (%)',
+                            data: [0, 0, 0.5, 8.4, 0],
+                            borderColor: '#ef4444',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: 'Comportamiento del Tiempos de Respuesta vs Concurrencia' }
+                    }
+                }
+            });
+            runSimulation();
+        }
+
+        function runSimulation() {
+            const vus = parseInt(document.getElementById('sim-vus').value);
+            const capacityType = document.getElementById('sim-capacity').value;
+            document.getElementById('vu-val').innerText = `${vus} VUs`;
+
+            let maxCap = 800;
+            if (capacityType === 'small') maxCap = 400;
+            if (capacityType === 'high') maxCap = 1200;
+
+            let p95 = Math.round(150 + Math.pow(vus / maxCap, 2.5) * 450);
+            let rps = Math.min(vus * 12, maxCap * 10);
+            let cpu = Math.min(Math.round((vus / maxCap) * 75 + 10), 100);
+            let errorRate = 0;
+
+            if (vus > maxCap) {
+                errorRate = (((vus - maxCap) / maxCap) * 25).toFixed(1);
+            }
+
+            document.getElementById('m-p95').innerText = `${p95} ms`;
+            document.getElementById('m-rps').innerText = `${rps} req/s`;
+            document.getElementById('m-error').innerText = `${errorRate} %`;
+            document.getElementById('m-cpu').innerText = `${cpu} %`;
+
+            const box = document.getElementById('diagnostic-box');
+            if (errorRate > 5 || p95 > 1500) {
+                box.className = "p-4 rounded-xl text-xs leading-relaxed bg-red-50 border border-red-200 text-red-900";
+                box.innerHTML = `<strong><i class="fa-solid fa-triangle-exclamation text-red-600 mr-1"></i> Diagnóstico: Cuello de Botella Detectado (Saturación)</strong><br>
+                A ${vus} usuarios concurrentes, el servidor sobrepasa su capacidad óptima (${maxCap} VUs). El tiempo P95 subió a ${p95}ms y la tasa de errores alcanzó el ${errorRate}%.<br>
+                <em>Recomendación:</em> Aplicar almacenamiento en caché (Redis) para la API e incrementar el *connection pool* de la base de datos.`;
+            } else {
+                box.className = "p-4 rounded-xl text-xs leading-relaxed bg-emerald-50 border border-emerald-200 text-emerald-900";
+                box.innerHTML = `<strong><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Diagnóstico: Sistema Estable</strong><br>
+                A ${vus} usuarios concurrentes, los tiempos de respuesta (${p95}ms) están dentro de los SLA aceptables (< 1500ms) y la tasa de error es adecuada (${errorRate}%).`;
+            }
+        }
+
+        // Report Generator
+        function downloadReport() {
+            const author = document.getElementById('report-author').value || 'Aprendiz ADSO';
+            const tool = document.getElementById('report-tool').value;
+            const env = document.getElementById('report-env').value;
+            const bottlenecks = document.getElementById('report-bottlenecks').value || 'No documentado';
+            const recommendations = document.getElementById('report-recommendations').value || 'No documentado';
+            const reflection = document.getElementById('reflection-note').value || 'No registrada';
+
+            const mdContent = `# Informe Técnico de Pruebas de Rendimiento - ADSO
+**SENA - Centro de Gestión de Mercados, Logística y T.I.**
+**Programa:** Análisis y Desarrollo de Software (ADSO) - Competencia 220501096
+
+---
+
+### 1. Datos Generales
+- **Autor / Equipo:** ${author}
+- **Herramienta Evaluadora:** ${tool}
+- **Fecha:** ${new Date().toLocaleDateString()}
+
+### 2. Entorno de Pruebas
+${env}
+
+### 3. Escenarios Ejecutados
+- **Nivel 1 (100 VUs):** Carga Normal
+- **Nivel 2 (500 VUs):** Carga Media/Alta
+- **Nivel 3 (1000 VUs):** Prueba de Estrés (Límite)
+
+### 4. Análisis y Cuellos de Botella (Bottlenecks)
+${bottlenecks}
+
+### 5. Recomendaciones de Optimización Técnica
+${recommendations}
+
+### 6. Reflexión Inicial del Aprendiz
+${reflection}
+`;
+
+            const blob = new Blob([mdContent], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Informe_Pruebas_Rendimiento_${author.replace(/\s+/g, '_')}.md`;
+            a.click();
+        }
+
+        // Init on Load
+        window.onload = function () {
+            updateK6Code();
+        };
+    </script>
+</body>
+
+</html>
