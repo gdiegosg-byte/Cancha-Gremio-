@@ -6,6 +6,7 @@ import { useToast } from '@/context/ToastContext';
 import { eventosApi } from '@/api/eventos';
 import { fieldsApi } from '@/api/campos';
 import type { FieldResponse } from '@/api/campos';
+import { todayLocal } from '@/hooks';
 
 interface Evento {
   id: string;
@@ -193,7 +194,7 @@ export default function EventosPage() {
       titulo: '',
       descripcion: '',
       tipo: 'torneo',
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: todayLocal(),
       horaInicio: '08:00',
       horaFin: '10:00',
       cupos: 10,

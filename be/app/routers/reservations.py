@@ -97,8 +97,8 @@ def _build_reservation(db: Session, item: ReservationCreate):
         start_time=item.start_time,
         end_time=item.end_time,
         total_price=round(price_per_hour * hours, 2),
-        status="confirmed",
-        payment_status="pending",
+        status=item.status or "pending",
+        payment_status=item.payment_status or "pending",
     )
 
 
@@ -203,10 +203,27 @@ def create_reservation(reservation: ReservationCreate, db: Session = Depends(get
 @router.put("/{reservation_id}", response_model=ReservationResponse,
             summary="Actualizar reserva",
             description="Actualiza datos completos (cliente, cancha, horario), estado o estado de pago de una reserva. Si cambian cancha/horario, se revalida disponibilidad y se recalcula el precio.")
-def update_reservation(reservation_id: int, data: ReservationUpdate, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+def update_reservation(reservation_id: int, data: ReservationUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
     if not reservation:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
+
+    is_owner = reservation.client_email.lower() == (user.email or "").lower()
+    is_admin = user.role == "ADMIN"
+    if not is_admin and not is_owner:
+        raise HTTPException(status_code=403, detail="No tienes permiso para modificar esta reserva")
+
+    only_payment = (
+        data.field_id is None
+        and data.start_time is None
+        and data.end_time is None
+        and data.client_name is None
+        and data.client_email is None
+        and data.client_phone is None
+        and data.status is None
+    )
+    if not is_admin and not only_payment:
+        raise HTTPException(status_code=403, detail="Solo el administrador puede modificar estos datos")
 
     changes = []
 
@@ -251,7 +268,7 @@ def update_reservation(reservation_id: int, data: ReservationUpdate, db: Session
         reservation.status = data.status
 
     if data.payment_status is not None:
-        if data.payment_status not in {"pending", "paid", "cancelled", "refunded"}:
+        if data.payment_status not in {"pending", "partial", "paid", "cancelled", "refunded"}:
             raise HTTPException(status_code=400, detail=f"Estado de pago inválido: {data.payment_status}")
         if data.payment_status != reservation.payment_status:
             changes.append(f"payment_status: {reservation.payment_status} -> {data.payment_status}")
@@ -260,20 +277,23 @@ def update_reservation(reservation_id: int, data: ReservationUpdate, db: Session
     db.commit()
     db.refresh(reservation)
     if changes:
-        write_audit(db, "reservations", reservation.id, "UPDATE", "; ".join(changes), performed_by=admin.email)
+        write_audit(db, "reservations", reservation.id, "UPDATE", "; ".join(changes), performed_by=user.email)
     return reservation
 
 
 @router.delete("/{reservation_id}",
                summary="Cancelar/eliminar reserva",
-               description="Cancela una reserva (borrado lógico: pasa a estado 'cancelled').")
-def delete_reservation(reservation_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+               description="Cancela una reserva (borrado lógico: pasa a estado 'cancelled'). El cliente puede cancelar solo sus propias reservas; el administrador puede cancelar cualquiera.")
+def delete_reservation(reservation_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
     if not reservation:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
 
+    if user.role != "ADMIN" and reservation.client_email.lower() != user.email.lower():
+        raise HTTPException(status_code=403, detail="Solo puedes cancelar tus propias reservas")
+
     reservation.status = "cancelled"
     db.commit()
     db.refresh(reservation)
-    write_audit(db, "reservations", reservation_id, "DELETE", f"Reserva #{reservation_id} cancelada", performed_by=admin.email)
+    write_audit(db, "reservations", reservation_id, "DELETE", f"Reserva #{reservation_id} cancelada", performed_by=user.email)
     return {"message": "Reserva cancelada correctamente"}

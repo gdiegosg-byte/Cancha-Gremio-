@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 
 VALID_STATUSES = {"pending", "confirmed", "cancelled"}
-VALID_PAYMENT_STATUSES = {"pending", "paid", "cancelled", "refunded"}
+VALID_PAYMENT_STATUSES = {"pending", "partial", "paid", "cancelled", "refunded"}
 
 
 class ReservationCreate(BaseModel):
@@ -16,6 +16,8 @@ class ReservationCreate(BaseModel):
     client_phone: str = Field(min_length=7, max_length=20)
     start_time: datetime
     end_time: datetime
+    status: str | None = Field(default=None, pattern="^(pending|confirmed)$")
+    payment_status: str | None = Field(default=None, pattern="^(pending|partial|paid)$")
 
 
 class ReservationBulkCreate(BaseModel):
@@ -31,7 +33,7 @@ class ReservationUpdate(BaseModel):
     end_time: datetime | None = None
     status: str | None = Field(default=None, pattern="^(pending|confirmed|cancelled)$")
     payment_status: str | None = Field(
-        default=None, pattern="^(pending|paid|cancelled|refunded)$"
+        default=None, pattern="^(pending|partial|paid|cancelled|refunded)$"
     )
 
 

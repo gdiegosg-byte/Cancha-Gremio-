@@ -20,6 +20,7 @@ export interface ReservationCreate {
   client_phone: string;
   start_time: string;
   end_time: string;
+  payment_status?: string;
 }
 
 export interface ReservationUpdate {

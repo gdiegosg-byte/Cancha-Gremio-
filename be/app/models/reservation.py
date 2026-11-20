@@ -10,7 +10,7 @@ class Reservation(Base):
     __tablename__ = "reservations"
     __table_args__ = (
         CheckConstraint("status IN ('pending', 'confirmed', 'cancelled')", name="ck_reservations_status"),
-        CheckConstraint("payment_status IN ('pending', 'paid', 'cancelled', 'refunded')", name="ck_reservations_payment_status"),
+        CheckConstraint("payment_status IN ('pending', 'partial', 'paid', 'cancelled', 'refunded')", name="ck_reservations_payment_status"),
     )
 
     id = Column(Integer, primary_key=True, index=True)

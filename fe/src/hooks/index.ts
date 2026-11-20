@@ -96,3 +96,22 @@ export function useClickOutside<T extends HTMLElement>(callback: () => void) {
 
   return ref;
 }
+
+// =============================================
+// Date helpers (hora local, evitan desfase de toISOString/UTC)
+// =============================================
+
+export function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = `${date.getMonth() + 1}`.padStart(2, '0');
+  const d = `${date.getDate()}`.padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function toLocalTimeString(date: Date): string {
+  return `${`${date.getHours()}`.padStart(2, '0')}:${`${date.getMinutes()}`.padStart(2, '0')}`;
+}
+
+export function todayLocal(): string {
+  return toLocalDateString(new Date());
+}

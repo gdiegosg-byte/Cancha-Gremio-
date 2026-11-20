@@ -5,6 +5,7 @@ import { useToast } from '@/context/ToastContext';
 import { reservasApi, ReservationResponse, ReservationUpdate } from '@/api/reservas';
 import { fieldsApi, FieldResponse } from '@/api/campos';
 import { eventosApi } from '@/api/eventos';
+import { toLocalDateString, toLocalTimeString, todayLocal } from '@/hooks';
 import { AlertCircle, Loader, Check, X, Trophy, Calendar, Clock, Users, Plus, Minus, Edit3, Trash2 } from 'lucide-react';
 
 interface Evento {
@@ -69,7 +70,7 @@ function isSlotReserved(slot: string, dateStr: string, fieldId: number, reservat
   const slotStart = new Date(`${dateStr}T${slot}`);
   const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
   return reservations.some(r => {
-    if (r.field_id !== fieldId) return false;
+    if (r.field_id !== fieldId || r.status === 'cancelled') return false;
     const rStart = new Date(r.start_time);
     const rEnd = new Date(r.end_time);
     return rStart < slotEnd && rEnd > slotStart;
@@ -77,7 +78,7 @@ function isSlotReserved(slot: string, dateStr: string, fieldId: number, reservat
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return toLocalDateString(date);
 }
 
 export default function DashboardPage() {
@@ -89,7 +90,7 @@ export default function DashboardPage() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(todayLocal());
 
   // Team inscription
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
@@ -166,7 +167,7 @@ export default function DashboardPage() {
       client_name: '',
       client_email: '',
       client_phone: '',
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: todayLocal(),
       horaInicio: '08:00',
       horaFin: '09:00',
       status: 'confirmed',
@@ -184,9 +185,9 @@ export default function DashboardPage() {
       client_name: r.client_name,
       client_email: r.client_email,
       client_phone: r.client_phone,
-      fecha: start.toISOString().split('T')[0],
-      horaInicio: start.toTimeString().slice(0, 5),
-      horaFin: end.toTimeString().slice(0, 5),
+      fecha: toLocalDateString(start),
+      horaInicio: toLocalTimeString(start),
+      horaFin: toLocalTimeString(end),
       status: r.status,
       payment_status: r.payment_status,
     });
@@ -534,10 +535,10 @@ export default function DashboardPage() {
                         <span style={{
                           display: 'inline-block', padding: '2px 8px', borderRadius: 99,
                           fontSize: '0.65rem', fontWeight: 700,
-                          background: r.status === 'confirmed' ? '#4ade8020' : '#ef444420',
-                          color: r.status === 'confirmed' ? '#4ade80' : '#ef4444',
+                          background: r.status === 'confirmed' ? '#4ade8020' : r.status === 'pending' ? '#fbbf2420' : '#ef444420',
+                          color: r.status === 'confirmed' ? '#4ade80' : r.status === 'pending' ? '#fbbf24' : '#ef4444',
                         }}>
-                          {r.status === 'confirmed' ? 'Confirmada' : r.status}
+                          {r.status === 'confirmed' ? 'Confirmada' : r.status === 'pending' ? 'Pendiente' : 'Cancelada'}
                         </span>
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'center' }}>
@@ -929,7 +930,8 @@ export default function DashboardPage() {
                     style={{ width: '100%', background: 'var(--clr-surface)', border: '1px solid var(--clr-border)', borderRadius: 4, color: 'var(--clr-text)', padding: 10, fontSize: '0.875rem' }}
                   >
                     <option value="pending">Pendiente</option>
-                    <option value="paid">Pagado</option>
+                    <option value="partial">Abono</option>
+                    <option value="paid">Pago completo</option>
                     <option value="refunded">Reembolsado</option>
                     <option value="cancelled">Cancelado</option>
                   </select>
@@ -954,8 +956,9 @@ export default function DashboardPage() {
 
 function PaymentBadge({ status }: { status: string }) {
   const styles: Record<string, { bg: string; color: string; label: string }> = {
-    paid: { bg: '#4ade8020', color: '#4ade80', label: 'Pagado' },
-    pending: { bg: '#fbbf2420', color: '#fbbf24', label: 'Pendiente' },
+    paid: { bg: '#4ade8020', color: '#4ade80', label: 'Pago completo' },
+    partial: { bg: '#fbbf2420', color: '#fbbf24', label: 'Abonado' },
+    pending: { bg: '#6b728020', color: '#9ca3af', label: 'Pendiente' },
     cancelled: { bg: '#ef444420', color: '#ef4444', label: 'Cancelado' },
     refunded: { bg: '#a78bfa20', color: '#a78bfa', label: 'Reembolsado' },
   };
@@ -985,8 +988,9 @@ function PaymentActions({ reservation, onUpdate }: { reservation: ReservationRes
   }
 
   const actions: { status: string; label: string; color: string }[] = [];
-  if (reservation.payment_status !== 'paid') actions.push({ status: 'paid', label: 'Pagado', color: '#4ade80' });
-  if (reservation.payment_status !== 'pending') actions.push({ status: 'pending', label: 'Pendiente', color: '#fbbf24' });
+  if (reservation.payment_status !== 'paid') actions.push({ status: 'paid', label: 'Pago completo', color: '#4ade80' });
+  if (reservation.payment_status !== 'partial') actions.push({ status: 'partial', label: 'Abono', color: '#fbbf24' });
+  if (reservation.payment_status !== 'pending') actions.push({ status: 'pending', label: 'Pendiente', color: '#9ca3af' });
   if (reservation.payment_status !== 'cancelled') actions.push({ status: 'cancelled', label: 'Cancelar', color: '#ef4444' });
 
   return (
