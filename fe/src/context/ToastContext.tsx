@@ -68,11 +68,13 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
       display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       {toasts.map(t => (
-        <div
+        <button
+          type="button"
           key={t.id}
           onClick={() => onRemove(t.id)}
           style={{
             display: 'flex', alignItems: 'center', gap: 10,
+            width: '100%', textAlign: 'left',
             background: '#0d1410', border: `1px solid ${colors[t.type]}40`,
             borderLeft: `3px solid ${colors[t.type]}`,
             color: '#e8f5ec', padding: '12px 16px',
@@ -85,7 +87,7 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
             {icons[t.type]}
           </span>
           <span style={{ fontSize: '0.875rem', flex: 1 }}>{t.message}</span>
-        </div>
+        </button>
       ))}
     </div>
   );

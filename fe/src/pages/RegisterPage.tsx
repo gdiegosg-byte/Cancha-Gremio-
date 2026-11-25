@@ -190,20 +190,24 @@ export default function RegisterPage() {
                       style={{ paddingRight: 36 }}
                     />
                     {f.name === 'password' && form.password && (
-                      <span
+                      <button
+                        type="button"
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                         onClick={() => setShowPassword(!showPassword)}
-                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'var(--clr-text-muted)', fontSize: '0.75rem' }}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'var(--clr-text-muted)', fontSize: '0.75rem', background: 'none', border: 'none', padding: 0 }}
                       >
                         {showPassword ? '🙈' : '👁️'}
-                      </span>
+                      </button>
                     )}
                     {f.name === 'confirmPassword' && form.confirmPassword && (
-                      <span
+                      <button
+                        type="button"
+                        aria-label={showConfirm ? 'Ocultar confirmación' : 'Mostrar confirmación'}
                         onClick={() => setShowConfirm(!showConfirm)}
-                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'var(--clr-text-muted)', fontSize: '0.75rem' }}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'var(--clr-text-muted)', fontSize: '0.75rem', background: 'none', border: 'none', padding: 0 }}
                       >
                         {showConfirm ? '🙈' : '👁️'}
-                      </span>
+                      </button>
                     )}
                   </div>
                   {f.name === 'confirmPassword' && form.confirmPassword && !passwordsMatch && (

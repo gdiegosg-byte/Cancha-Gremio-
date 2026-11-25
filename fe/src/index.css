@@ -227,7 +227,7 @@ label {
 
   .app-main-content { margin-left: 0 !important; }
 
-  .app-topbar { padding: 0 16px !important; gap: 10 !important; }
+  .app-topbar { padding: 0 16px !important; gap: 10px !important; }
   .topbar-search { display: none !important; }
 
   .app-main { padding: 20px 16px !important; }

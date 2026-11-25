@@ -6,7 +6,7 @@ import hashlib
 import logging
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from jose import JWTError, jwt
@@ -30,7 +30,7 @@ def generate_token() -> str:
 def encode_token(subject, token_type: str, expires_minutes: int, extra: dict | None = None):
     """Emite un JWT con expiración (exp), id único (jti), tipo (access/refresh) y datos extra."""
     jti = uuid.uuid4().hex
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": str(subject),
         "type": token_type,
@@ -74,7 +74,7 @@ def issue_auth_token(db: Session, user_id: int, token_type: str, expires_minutes
         user_id=user_id,
         token=hash_token(raw),
         token_type=token_type,
-        expires_at=datetime.utcnow() + timedelta(minutes=expires_minutes),
+        expires_at=(datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)).replace(tzinfo=None),
     ))
     db.commit()
     return raw
@@ -90,9 +90,12 @@ def consume_auth_token(db: Session, raw: str, token_type: str) -> AuthToken:
         raise HTTPException(status_code=401, detail="Enlace inválido")
     if row.used_at is not None:
         raise HTTPException(status_code=400, detail="Este enlace ya fue utilizado")
-    if row.expires_at < datetime.utcnow():
+    expires_at = row.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Este enlace ha expirado")
-    row.used_at = datetime.utcnow()
+    row.used_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     return row
 
@@ -103,7 +106,7 @@ def revoke_auth_tokens(db: Session, user_id: int, token_type: str):
         AuthToken.user_id == user_id,
         AuthToken.token_type == token_type,
         AuthToken.used_at.is_(None),
-    ).update({"used_at": datetime.utcnow()})
+    ).update({"used_at": datetime.now(timezone.utc).replace(tzinfo=None)})
     db.commit()
 
 

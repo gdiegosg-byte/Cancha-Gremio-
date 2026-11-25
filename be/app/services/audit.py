@@ -2,7 +2,7 @@
 # ¿Para qué? Registrar acciones críticas para trazabilidad
 # ¿Impacto? Permite cumplir el checklist de auditoría de la BD
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from app.models.audit_log import AuditLog
 
@@ -13,7 +13,7 @@ def write_audit(db: Session, table_name: str, record_id, action: str, details: s
         action=action,
         details=details,
         performed_by=performed_by,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     db.add(log)
     db.commit()

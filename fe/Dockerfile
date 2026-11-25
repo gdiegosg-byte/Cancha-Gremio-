@@ -5,7 +5,8 @@ WORKDIR /app
 COPY package*.json .
 RUN npm install
 
-COPY . .
+COPY index.html vite.config.ts tsconfig.json tsconfig.node.json ./
+COPY src ./src
 
 EXPOSE 5173
 

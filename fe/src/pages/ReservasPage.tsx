@@ -91,8 +91,8 @@ function detectEventType(res: ReservationResponse): EventType {
 function getHoursInRange(start: string | null | undefined, end: string | null | undefined): string[] {
   const hours: string[] = [];
   if (!start || !end) return hours;
-  const s = parseInt(start.split(':')[0]);
-  const e = parseInt(end.split(':')[0]);
+  const s = Number.parseInt(start.split(':')[0], 10);
+  const e = Number.parseInt(end.split(':')[0], 10);
   for (let i = s; i < e; i++) {
     hours.push(`${i.toString().padStart(2, '0')}:00`);
   }
@@ -100,7 +100,7 @@ function getHoursInRange(start: string | null | undefined, end: string | null | 
 }
 
 function nextHour(slot: string): string {
-  const h = parseInt(slot.split(':')[0], 10) + 1;
+  const h = Number.parseInt(slot.split(':')[0], 10) + 1;
   return `${h.toString().padStart(2, '0')}:00`;
 }
 
@@ -374,7 +374,7 @@ export default function ReservasPage() {
 
   function occupantOf(field: FieldResponse, slot: string): ReservationResponse | null {
     const slotStart = new Date(`${gridDate}T${slot}`);
-    if (isNaN(slotStart.getTime())) return null;
+    if (Number.isNaN(slotStart.getTime())) return null;
     const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
     return reservas.find(r =>
       r.field_id === field.id &&
