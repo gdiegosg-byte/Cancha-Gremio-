@@ -7,6 +7,7 @@ import { fieldsApi, FieldResponse } from '@/api/campos';
 import { eventosApi } from '@/api/eventos';
 import { tarifasApi, TarifaCalculada } from '@/api/tarifas';
 import { todayLocal } from '@/hooks';
+import { getHoursInRange } from '@/utils/hours';
 import { AlertCircle, Loader, Plus, Trophy, Users, Calendar, Clock, Search, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type EventType = 'torneo' | 'liga' | 'evento_especial' | 'reserva';
@@ -86,17 +87,6 @@ function detectEventType(res: ReservationResponse): EventType {
   if (name.includes('liga')) return 'liga';
   if (name.includes('evento') || name.includes('especial')) return 'evento_especial';
   return 'reserva';
-}
-
-function getHoursInRange(start: string | null | undefined, end: string | null | undefined): string[] {
-  const hours: string[] = [];
-  if (!start || !end) return hours;
-  const s = Number.parseInt(start.split(':')[0], 10);
-  const e = Number.parseInt(end.split(':')[0], 10);
-  for (let i = s; i < e; i++) {
-    hours.push(`${i.toString().padStart(2, '0')}:00`);
-  }
-  return hours;
 }
 
 function nextHour(slot: string): string {

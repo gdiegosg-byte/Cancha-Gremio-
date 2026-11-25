@@ -6,6 +6,7 @@ import { reservasApi, ReservationResponse, ReservationUpdate } from '@/api/reser
 import { fieldsApi, FieldResponse } from '@/api/campos';
 import { eventosApi } from '@/api/eventos';
 import { toLocalDateString, toLocalTimeString, todayLocal } from '@/hooks';
+import { getHoursInRange } from '@/utils/hours';
 import { AlertCircle, Loader, Check, X, Trophy, Calendar, Clock, Users, Plus, Minus, Edit3, Trash2 } from 'lucide-react';
 
 interface Evento {
@@ -54,17 +55,6 @@ const tipoLabels: Record<string, string> = {
   liga: 'Liga',
   evento_especial: 'Evento',
 };
-
-function getHoursInRange(start: string | null | undefined, end: string | null | undefined): string[] {
-  const hours: string[] = [];
-  if (!start || !end) return hours;
-  const s = Number.parseInt(start.split(':')[0], 10);
-  const e = Number.parseInt(end.split(':')[0], 10);
-  for (let i = s; i < e; i++) {
-    hours.push(`${i.toString().padStart(2, '0')}:00`);
-  }
-  return hours;
-}
 
 function isSlotReserved(slot: string, dateStr: string, fieldId: number, reservations: ReservationResponse[]): boolean {
   const slotStart = new Date(`${dateStr}T${slot}`);
