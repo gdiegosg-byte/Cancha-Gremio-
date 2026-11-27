@@ -153,9 +153,9 @@ docker compose up -d
 
 # Terminal 2 — Backend (FastAPI)
 cd be && source .venv/Scripts/activate
-uvicorn app.main:app --reload
-# → API en http://localhost:8000
-# → Swagger UI en http://localhost:8000/docs
+uvicorn app.main:app --reload --port 8001
+# → API en http://localhost:8001
+# → Swagger UI en http://localhost:8001/docs
 
 # Terminal 3 — Frontend (React)
 cd fe && pnpm dev
@@ -178,7 +178,7 @@ pytest -v
 pytest --cov=app --cov-report=term-missing
 ```
 
-**Resultado:** ✅ 32/32 tests pasando
+**Resultado:** ✅ 63/63 tests pasando
 
 ### Frontend
 
@@ -192,7 +192,12 @@ pnpm test
 pnpm test:coverage
 ```
 
-**Resultado:** ✅ 82/82 tests pasando
+**Resultado:** ✅ 28/28 tests pasando
 
+---
+
+## 📚 Guía para la exposición
+
+- `GUIAS_PRESENTACION.md` — Docker, base de datos, pgAdmin y credenciales de la demo.
 
 En conclusión, el proyecto cumple con el objetivo de modernizar y organizar la operación de la cancha, mejorando significativamente la experiencia tanto de los clientes como de los administradores.

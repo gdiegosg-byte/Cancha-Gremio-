@@ -11,6 +11,7 @@ from app.models.reservation import Reservation
 from app.models.user import User
 from app.models.event import Event
 from app.models.field import Field
+from app.utils.dates import month_bounds, month_name_es
 from datetime import datetime, date
 
 # Toda la sección de dashboard es para administradores
@@ -21,15 +22,13 @@ ESTADOS_VALIDOS = {"pending", "confirmed", "cancelled"}
 
 def _build_reporte_query(db: Session, year: int, month: int,
                           field_id: int | None = None, estado: str | None = None):
-    if not (1 <= month <= 12):
-        raise HTTPException(status_code=400, detail="El mes debe estar entre 1 y 12")
-    if not (2000 <= year <= 2100):
-        raise HTTPException(status_code=400, detail="El año debe estar entre 2000 y 2100")
     if estado and estado not in ESTADOS_VALIDOS:
         raise HTTPException(status_code=400, detail=f"Estado inválido: {estado}")
 
-    desde = datetime(year, month, 1)
-    hasta = datetime(year + (1 if month == 12 else 0), (1 if month == 12 else month + 1), 1)
+    try:
+        desde, hasta = month_bounds(year, month)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     query = db.query(Reservation).filter(
         Reservation.start_time >= desde,
@@ -89,7 +88,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     ).scalar()
 
     horas_disponibles = 0
-    for f in db.query(Field).filter(Field.is_active == True).all():
+    for f in db.query(Field).filter(Field.is_active.is_(True)).all():
         try:
             h_start = int(f.available_hour_start.split(":")[0])
             h_end = int(f.available_hour_end.split(":")[0])
@@ -125,8 +124,7 @@ def get_reporte(
     reservas = query.order_by(Reservation.start_time.asc()).all()
 
     total_ingresos = sum(r.total_price for r in reservas if r.status == "confirmed")
-    nombre_mes = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][month]
+    nombre_mes = month_name_es(month)
 
     return {
         "periodo": {"year": year, "month": month, "mes": nombre_mes, "desde": desde.strftime("%Y-%m-%d")},

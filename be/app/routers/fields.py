@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import require_admin
 from app.schemas.field import FieldCreate, FieldUpdate, FieldResponse
 from app.models.field import Field
 from app.models.user import User
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/v1/fields", tags=["fields"])
 @router.get("/", response_model=list[FieldResponse],
             summary="Listar canchas activas")
 def get_fields(db: Session = Depends(get_db)):
-    fields = db.query(Field).filter(Field.is_active == True).all()
+    fields = db.query(Field).filter(Field.is_active.is_(True)).all()
     return fields
 
 

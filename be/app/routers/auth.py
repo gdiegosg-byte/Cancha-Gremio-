@@ -1,9 +1,5 @@
-from typing import Literal
+from fastapi import APIRouter, Body, Depends, Header
 
-from fastapi import APIRouter, Body, Depends, Header, HTTPException
-from sqlalchemy.orm import Session
-
-from app.database import get_db
 from app.schemas.auth import LoginRequest, EmailRequest, ResetRequest, RegisterRequest, DeleteAccountRequest
 from app.dependencies import get_current_user
 from app.models.user import User

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Layout from '@/components/Layout';
 import { Search, Phone, Mail, CalendarDays, X, Loader2, UserCheck, UserX, ChevronLeft, ChevronRight, AlertTriangle, RotateCcw } from 'lucide-react';
 import { usersApi } from '@/api/auth';
@@ -37,21 +37,21 @@ export default function ClientesPage() {
     telefono: '',
   });
 
-  async function fetchClientes() {
+  const fetchClientes = useCallback(async () => {
     try {
       setLoading(true);
       const res = await usersApi.getAll();
       setClientes(res.data);
-    } catch (error) {
+    } catch {
       toast('Error al cargar la lista de clientes', 'error');
     } finally {
       setLoading(false);
     }
-  }
+  }, [toast]);
 
   useEffect(() => {
     fetchClientes();
-  }, []);
+  }, [fetchClientes]);
 
   const filtered = clientes.filter(c =>
     c.nombre.toLowerCase().includes(search.toLowerCase()) ||

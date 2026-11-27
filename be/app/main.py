@@ -1,6 +1,4 @@
-# ¿Qué? Punto de entrada principal de la aplicación FastAPI
-# ¿Para qué? Inicializa el servidor y registra todos los routers
-# ¿Impacto? Sin este archivo el servidor no puede arrancar
+
 from app.config import settings
 from app.routers import auth, reservations, fields, events, maintenance, dashboard, clientes, pricing
 from fastapi import FastAPI, Request

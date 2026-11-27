@@ -1,6 +1,4 @@
-# ¿Qué? Configuración de la conexión a PostgreSQL con SQLAlchemy
-# ¿Para qué? Proveer una sesión de base de datos a cada endpoint
-# ¿Impacto? Sin esto no se pueden realizar operaciones en la BD
+
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
