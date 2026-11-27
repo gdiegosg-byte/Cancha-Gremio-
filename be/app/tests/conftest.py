@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db
 from app.main import app
 from app.models.user import User
-from app.services import auth_service, security
+from app.services import security
 
 for model_name in (
     "audit_log",
@@ -39,10 +39,8 @@ def engine():
 
 
 @pytest.fixture()
-def session_factory(engine, monkeypatch):
-    factory = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-    monkeypatch.setattr(auth_service, "SessionLocal", factory)
-    return factory
+def session_factory(engine):
+    return sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
 @pytest.fixture()

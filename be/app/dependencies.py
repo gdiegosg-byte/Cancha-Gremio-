@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
-from app.services.security import decode_token, is_blacklisted
+from app.repositories.token_blacklist_repository import TokenBlacklistRepository
+from app.repositories.user_repository import UserRepository
+from app.services.security import decode_token
 
 
 def extract_bearer(authorization: str = Header(default="")) -> str:
@@ -21,9 +23,9 @@ def extract_bearer(authorization: str = Header(default="")) -> str:
 
 def get_current_user(token: str = Depends(extract_bearer), db: Session = Depends(get_db)) -> User:
     payload = decode_token(token, "access")
-    if is_blacklisted(db, payload.get("jti", "")):
+    if TokenBlacklistRepository(db).is_blacklisted(payload.get("jti", "")):
         raise HTTPException(status_code=401, detail="Sesión inválida: token revocado")
-    user = db.query(User).filter(User.id == int(payload.get("sub", 0))).first()
+    user = UserRepository(db).get(int(payload.get("sub", 0)))
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="Usuario no válido o inactivo")
     # Cerrar sesión en todos los dispositivos invalida los tokens anteriores

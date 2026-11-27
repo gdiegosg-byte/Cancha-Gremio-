@@ -1,5 +1,16 @@
 # 04 · Evidencias
 
+## Verificación posterior al refactor por capas
+
+Tras incorporar `be/app/repositories/` y los servicios por caso de uso se ejecutó, desde `be`:
+
+```bash
+./.venv/Scripts/python.exe -m pytest -q app/tests
+./.venv/Scripts/python.exe -m ruff check app
+```
+
+Resultados: `63 passed` y `All checks passed!`. Las respuestas HTTP registradas más abajo pertenecen a la línea base y siguen siendo el contrato verificado: `400` para estado inválido, `409` para solape, `201` para creación y auditoría registrada.
+
 ## Versión auditada
 
 ```text
@@ -206,8 +217,8 @@ Integrantes: Diego Palencia, Julián Avilez, Erik Crespo
 | ¿Por qué esas dos operaciones? | La consulta no altera estado; la escritura deja efecto persistente verificable en `reservations` y `audit_logs`. | `01-funcionalidades.md` |
 | ¿Qué actor ejecuta cada una? | Usuario autenticado (`CLIENT` o `ADMIN`) con token Bearer; en UI por `/reservas`. | `App.tsx:48-50`; `dependencies.py:22-32` |
 | ¿Dónde está el controlador? | En la misma función decorada de FastAPI; la guía acepta router + controlador en un mismo archivo. | `reservations.py:105`, `184`; guía página 2 |
-| ¿Qué responsabilidades están mezcladas? | Vista previa de conflictos en UI, consultas/commit en el router y reglas de negocio fuera de dominio/service. | `03-matriz-responsabilidades.md` |
-| ¿Por qué no se separaron capas? | La entrega es línea base; la guía prohíbe refactorizar en Fase 1-2 y exige justificar antes de proponer cambios. | Guía páginas 1 y 8 |
+| ¿Qué responsabilidades estaban mezcladas en la línea base? | Vista previa de conflictos en UI, consultas/commit en el router y reglas de negocio fuera de dominio/service. | `03-matriz-responsabilidades.md` |
+| ¿Por qué se separaron capas después? | La línea base quedó documentada primero; después se aplicó el refactor a monolito modular por capas sin cambiar el contrato HTTP. | `03-matriz-responsabilidades.md` |
 | ¿Qué pasa si la cancha no existe? | `404 Cancha no encontrada`. | `reservations.py:54-58` |
 | ¿Qué pasa si el horario solapa o hay evento? | `409` con detalle de la reserva o del evento bloqueante. | `reservations.py:27-51` |
 | ¿Qué tablas se consultan y cuáles se modifican? | Consulta: `reservations`, `users`, `token_blacklist`. Escritura además consulta `fields`, `events`, `pricing_tiers` y modifica `reservations` + `audit_logs`. | `01-funcionalidades.md` |

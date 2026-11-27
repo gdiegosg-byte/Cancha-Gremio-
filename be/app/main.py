@@ -1,6 +1,7 @@
 
 from app.config import settings
 from app.routers import auth, reservations, fields, events, maintenance, dashboard, clientes, pricing
+from app.services.exceptions import DomainError
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,6 +71,11 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
         status_code=409,
         content={"detail": "La operación viola una regla de integridad de la base de datos (dato duplicado o referenciado)."},
     )
+
+
+@app.exception_handler(DomainError)
+async def domain_error_handler(request: Request, exc: DomainError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 @app.exception_handler(Exception)

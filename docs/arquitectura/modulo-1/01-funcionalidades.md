@@ -41,4 +41,4 @@ Estado de verificación: ambas operaciones se ejecutaron con `fastapi.testclient
 - Regla funcional: pertenencia de `estado`, existencia de cancha, ventana operativa, solapamiento y cálculo de tarifa.
 - Error técnico: `IntegrityError` traducido a `409` en `main.py:68-74`; errores no controlados a `500` en `main.py:77-83`.
 - No se identificaron llamadas a proveedores externos, procesos en segundo plano ni eventos asíncronos en estas dos operaciones.
-- Sin componente separado de repositorio: las consultas se hacen con `db.query(...)` directamente en el router. No es un error por sí solo; se documenta en `03-matriz-responsabilidades.md`.
+- Estado actual: las consultas ya están separadas en `be/app/repositories/` y las reglas funcionales en `be/app/services/`. Las referencias de líneas de esta tabla corresponden a la línea base documentada.
